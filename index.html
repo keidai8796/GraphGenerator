@@ -33,6 +33,13 @@
 				ctx.fillStyle=this.color;
 				ctx.fill();
 			}
+			
+			//指定された座標が頂点と重なっているかを判定			
+			isPointOverlapping(x,y){
+				let dx=this.x-x;
+				let dy=this.y-y;
+				return dx**2+dy**2<=this.radius**2;
+			}
 		}
 		
 		let vertices=[new Vertex(100,100,10),new Vertex(200,100,10)];
@@ -45,6 +52,43 @@
 			//頂点を描画
 			vertices.forEach((vertex)=>vertex.draw());
 		}
+		
+		let draggedObject=null;
+		let clickOffsetX,clickOffsetY;
+		
+		//マウスがクリックされたときの処理
+		canvas.addEventListener('mousedown',(e)=>{
+			//canvas上でのマウス座標を計算
+			const rect=canvas.getBoundingClientRect();
+			let mouseX=e.clientX-rect.left;
+			let mouseY=e.clientY-rect.top;
+			
+			for(let i=0;i<vertices.length;i++){
+				if(vertices[i].isPointOverlapping(mouseX,mouseY)){
+					draggedObject=vertices[i];
+					clickOffsetX=mouseX-vertices[i].x;
+					clickOffsetY=mouseY-vertices[i].y;
+					break;
+				}
+			}
+		});
+		
+		//マウスが移動したときの処理
+		canvas.addEventListener('mousemove',(e)=>{
+			if(draggedObject!=null){
+				const rect=canvas.getBoundingClientRect();
+				let mouseX=e.clientX-rect.left;
+				let mouseY=e.clientY-rect.top;
+				draggedObject.x=mouseX-clickOffsetX;
+				draggedObject.y=mouseY-clickOffsetY;
+				draw();
+			}
+		});
+		
+		//マウスボタンが離されたときの処理
+		canvas.addEventListener('mouseup',()=>{
+			draggedObject=null;
+		});
 		
 		draw();
 		
