@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GraphGenerator</title>
+		<style>
+			#canvas{
+				border:1px solid black;
+			}
+		</style>
+</head>
+<body>
+    <h1>離散グラフを生成するアプリです</h1>
+    <canvas id="canvas" width="600" height="600"></canvas>
+		
+    <script>
+    const canvas=document.getElementById('canvas');
+		const ctx=canvas.getContext('2d');
+		
+		//頂点クラス
+		class Vertex{
+			//コンストラクタ
+			constructor(x,y,radius){
+				this.x=x;
+				this.y=y;
+				this.radius=radius;
+				this.color='black'
+			}
+			
+			//頂点を描画する関数
+			draw(){
+				ctx.beginPath();
+				ctx.arc(this.x,this.y,this.radius,0,2*Math.PI);
+				ctx.fillStyle=this.color;
+				ctx.fill();
+			}
+		}
+		
+		let vertices=[new Vertex(100,100,10),new Vertex(200,100,10)];
+		
+		//グラフを描画する関数
+		function draw(){
+			//canvasを初期化
+			ctx.clearRect(0,0,canvas.clientWidth,canvas.height);
+			
+			//頂点を描画
+			vertices.forEach((vertex)=>vertex.draw());
+		}
+		
+		draw();
+		
+    </script>
+</body>
+</html>
