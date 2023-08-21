@@ -1,97 +1,97 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GraphGenerator</title>
-		<style>
-			#canvas{
-				border:1px solid black;
-			}
-		</style>
+  <title>GraphGenerator</title>
+	<style>
+		#canvas{
+			border:1px solid black;
+		}
+	</style>
 </head>
 <body>
-    <h1>離散グラフを生成するアプリです</h1>
-    <canvas id="canvas" width="600" height="600"></canvas>
-		
-    <script>
-    const canvas=document.getElementById('canvas');
-		const ctx=canvas.getContext('2d');
-		
-		//頂点クラス
-		class Vertex{
-			//コンストラクタ
-			constructor(x,y,radius){
-				this.x=x;
-				this.y=y;
-				this.radius=radius;
-				this.color='black'
-			}
-			
-			//頂点を描画する関数
-			draw(){
-				ctx.beginPath();
-				ctx.arc(this.x,this.y,this.radius,0,2*Math.PI);
-				ctx.fillStyle=this.color;
-				ctx.fill();
-			}
-			
-			//指定された座標が頂点と重なっているかを判定			
-			isPointOverlapping(x,y){
-				let dx=this.x-x;
-				let dy=this.y-y;
-				return dx**2+dy**2<=this.radius**2;
-			}
+  <h1>離散グラフを生成するアプリです</h1>
+  <canvas id="canvas" width="600" height="600"></canvas>
+	
+  <script>
+  const canvas=document.getElementById('canvas');
+	const ctx=canvas.getContext('2d');
+	
+	//頂点クラス
+	class Vertex{
+		//コンストラクタ
+		constructor(x,y,radius){
+			this.x=x;
+			this.y=y;
+			this.radius=radius;
+			this.color='black'
 		}
 		
-		let vertices=[new Vertex(100,100,10),new Vertex(200,100,10)];
-		
-		//グラフを描画する関数
-		function draw(){
-			//canvasを初期化
-			ctx.clearRect(0,0,canvas.clientWidth,canvas.height);
-			
-			//頂点を描画
-			vertices.forEach((vertex)=>vertex.draw());
+		//頂点を描画する関数
+		draw(){
+			ctx.beginPath();
+			ctx.arc(this.x,this.y,this.radius,0,2*Math.PI);
+			ctx.fillStyle=this.color;
+			ctx.fill();
 		}
 		
-		let draggedObject=null;
-		let clickOffsetX,clickOffsetY;
+		//指定された座標が頂点と重なっているかを判定			
+		isPointOverlapping(x,y){
+			let dx=this.x-x;
+			let dy=this.y-y;
+			return dx**2+dy**2<=this.radius**2;
+		}
+	}
+	
+	let vertices=[new Vertex(100,100,10),new Vertex(200,100,10)];
 		
-		//マウスがクリックされたときの処理
-		canvas.addEventListener('mousedown',(e)=>{
-			//canvas上でのマウス座標を計算
+	//グラフを描画する関数
+	function draw(){
+		//canvasを初期化
+		ctx.clearRect(0,0,canvas.clientWidth,canvas.height);
+		
+		//頂点を描画
+		vertices.forEach((vertex)=>vertex.draw());
+	}
+	
+	let draggedObject=null;
+	let clickOffsetX,clickOffsetY;
+	
+	//マウスがクリックされたときの処理
+	canvas.addEventListener('mousedown',(e)=>{
+		//canvas上でのマウス座標を計算
+		const rect=canvas.getBoundingClientRect();
+		let mouseX=e.clientX-rect.left;
+		let mouseY=e.clientY-rect.top;
+		
+		for(let i=0;i<vertices.length;i++){
+			if(vertices[i].isPointOverlapping(mouseX,mouseY)){
+				draggedObject=vertices[i];
+				clickOffsetX=mouseX-vertices[i].x;
+				clickOffsetY=mouseY-vertices[i].y;
+				break;
+			}
+		}
+	});
+	
+	//マウスが移動したときの処理
+	canvas.addEventListener('mousemove',(e)=>{
+		if(draggedObject!=null){
 			const rect=canvas.getBoundingClientRect();
 			let mouseX=e.clientX-rect.left;
 			let mouseY=e.clientY-rect.top;
-			
-			for(let i=0;i<vertices.length;i++){
-				if(vertices[i].isPointOverlapping(mouseX,mouseY)){
-					draggedObject=vertices[i];
-					clickOffsetX=mouseX-vertices[i].x;
-					clickOffsetY=mouseY-vertices[i].y;
-					break;
-				}
-			}
-		});
-		
-		//マウスが移動したときの処理
-		canvas.addEventListener('mousemove',(e)=>{
-			if(draggedObject!=null){
-				const rect=canvas.getBoundingClientRect();
-				let mouseX=e.clientX-rect.left;
-				let mouseY=e.clientY-rect.top;
-				draggedObject.x=mouseX-clickOffsetX;
-				draggedObject.y=mouseY-clickOffsetY;
-				draw();
-			}
-		});
-		
-		//マウスボタンが離されたときの処理
-		canvas.addEventListener('mouseup',()=>{
-			draggedObject=null;
-		});
-		
-		draw();
-		
-    </script>
+			draggedObject.x=mouseX-clickOffsetX;
+			draggedObject.y=mouseY-clickOffsetY;
+			draw();
+		}
+	});
+	
+	//マウスボタンが離されたときの処理
+	canvas.addEventListener('mouseup',()=>{
+		draggedObject=null;
+	});
+	
+	draw();
+	
+  </script>
 </body>
 </html>
