@@ -45,35 +45,45 @@
 	//辺クラス
 	class Edge{
 		//コンストラクタ
-		constructor(vertex1,vertex2){
+		constructor(vertex1,vertex2,radius){
 			this.vertex1=vertex1;
 			this.vertex2=vertex2;
 			this.color='red';
-			this.radius=-300;
+			this.radius=radius;
 		}
 		
-		//辺を描画する関数
-		draw(){
-			//直線の描画
+		//直線の始点と終点を計算する関数
+		calcLine(){
 			let theta=Math.atan2(this.vertex2.y-this.vertex1.y,this.vertex2.x-this.vertex1.x);
-			ctx.beginPath();
-			ctx.moveTo(this.vertex1.x+Math.cos(theta)*this.vertex1.radius,this.vertex1.y+Math.sin(theta)*this.vertex1.radius);
-			ctx.lineTo(this.vertex2.x-Math.cos(theta)*this.vertex2.radius,this.vertex2.y-Math.sin(theta)*this.vertex2.radius);
-			ctx.strokeStyle=this.color;
-			ctx.lineWidth=2;
-			ctx.stroke();
-			
+			let x1=this.vertex1.x+Math.cos(theta)*this.vertex1.radius;
+			let y1=this.vertex1.y+Math.sin(theta)*this.vertex1.radius;
+			let x2=this.vertex2.x-Math.cos(theta)*this.vertex2.radius;
+			let y2=this.vertex2.y-Math.sin(theta)*this.vertex2.radius;
+			return {x1:x1,y1:y1,x2:x2,y2:y2};
+		}
+		
+		//弧の中心と角度を計算する関数
+		calcArc(){
 			//2頂点の座標を通る半径rの弧の中心(cx1,cy1),(cx2,cy2)を求める
-			//連立方程式(x-x1)^2+(y-y1)^2=r^2,(x-x2)^2+(y-y2)^2=r^2を解く
-			//ax^2+bx+c=0の解の公式を使っている
-			let tmp=(this.vertex2.x**2-this.vertex1.x**2+this.vertex2.y**2-this.vertex1.y**2)/(2*(this.vertex2.y-this.vertex1.y))-this.vertex1.y;
-			let a=1+((this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y))**2;
-			let b=-2*(this.vertex1.x+(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*tmp);
-			let c=this.vertex1.x**2+tmp**2-this.radius**2;
-			let cx1=(-b+Math.sqrt(b**2-4*a*c))/(2*a);
-			let cx2=(-b-Math.sqrt(b**2-4*a*c))/(2*a);
-			let cy1=-(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*cx1+tmp+this.vertex1.y;
-			let cy2=-(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*cx2+tmp+this.vertex1.y;
+			let cx1,cx2,cy1,cy2;
+			
+			if(this.vertex1.y==this.vertex2.y){
+				cx1=(this.vertex1.x+this.vertex2.x)/2;
+				cx2=cx1;
+				cy1=this.vertex1.y+Math.sqrt(this.radius**2-((this.vertex2.x-this.vertex1.x)/2)**2);
+				cy2=this.vertex1.y-Math.sqrt(this.radius**2-((this.vertex2.x-this.vertex1.x)/2)**2);
+			}else{
+				//連立方程式(x-x1)^2+(y-y1)^2=r^2,(x-x2)^2+(y-y2)^2=r^2を解く
+				//ax^2+bx+c=0の解の公式を使っている
+				let tmp=(this.vertex2.x**2-this.vertex1.x**2+this.vertex2.y**2-this.vertex1.y**2)/(2*(this.vertex2.y-this.vertex1.y))-this.vertex1.y;
+				let a=1+((this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y))**2;
+				let b=-2*(this.vertex1.x+(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*tmp);
+				let c=this.vertex1.x**2+tmp**2-this.radius**2;
+				cx1=(-b+Math.sqrt(b**2-4*a*c))/(2*a);
+				cx2=(-b-Math.sqrt(b**2-4*a*c))/(2*a);
+				cy1=-(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*cx1+tmp+this.vertex1.y;
+				cy2=-(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*cx2+tmp+this.vertex1.y;
+			}
 			
 			//外積が正の点を(cx1,cy1)とする
 			if((this.vertex2.x-this.vertex1.x)*(cy1-this.vertex1.y)-(this.vertex2.y-this.vertex1.y)*(cx1-this.vertex1.x)<0){
@@ -117,8 +127,28 @@
 				}
 			}
 			
+			return {cx:cx,cy:cy,theta1:theta1,theta2:theta2};
+		}
+		
+		//辺を描画する関数
+		draw(){
+			if((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)<=(this.vertex1.radius+this.vertex2.radius)**2){
+				return;
+			}
+			
+			//直線の描画
+			let line=this.calcLine();
 			ctx.beginPath();
-			ctx.arc(cx,cy,Math.abs(this.radius),theta1,theta2);
+			ctx.moveTo(line.x1,line.y1);
+			ctx.lineTo(line.x2,line.y2);
+			ctx.strokeStyle=this.color;
+			ctx.lineWidth=2;
+			ctx.stroke();
+			
+			//弧の描画
+			let arc=this.calcArc();
+			ctx.beginPath();
+			ctx.arc(arc.cx,arc.cy,Math.abs(this.radius),arc.theta1,arc.theta2);
 			ctx.strokeStyle=this.color;
 			ctx.lineWidth=2;
 			ctx.stroke();
@@ -126,15 +156,49 @@
 		
 		//指定された座標が辺と重なっているかを判定する
 		isPointOverlapping(x,y){
-			let dx=this.x-x;
-			let dy=this.y-y;
-			return dx**2+dy**2<=this.radius**2;
+			if((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)<=(this.vertex1.radius+this.vertex2.radius)**2){
+				return;
+			}
+			
+			let d=1e9;
+			
+			//それぞれ線分の端点と微分が0となる点で線との距離を計算して最小値を得る
+			if(true){
+				//直線との判定
+				let line=this.calcLine();
+				
+				d=Math.min(d,Math.sqrt((line.x1-x)**2+(line.y1-y)**2));
+				d=Math.min(d,Math.sqrt((line.x2-x)**2+(line.y2-y)**2));
+				if((line.x2-line.x1)**2+(line.y2-line.y1)**2!=0){
+					let t=-((line.x2-line.x1)*(line.x1-x)+(line.y2-line.y1)*(line.y1-y))/((line.x2-line.x1)**2+(line.y2-line.y1)**2);
+					if(0<=t&&t<=1){
+						d=Math.min(d,Math.sqrt((line.x1+(line.x2-line.x1)*t-x)**2+(line.y1+(line.y2-line.y1)*t-y)**2));
+					}
+				}
+			}else{
+				//弧との判定
+				let arc=this.calcArc();
+				let theta=Math.atan2(y-arc.cy,x-arc.cx);
+				
+				d=Math.min(d,Math.sqrt((x-arc.cx-Math.abs(this.radius)*Math.cos(arc.theta1))**2+(y-arc.cy-Math.abs(this.radius)*Math.sin(arc.theta1))**2));
+				d=Math.min(d,Math.sqrt((x-arc.cx-Math.abs(this.radius)*Math.cos(arc.theta2))**2+(y-arc.cy-Math.abs(this.radius)*Math.sin(arc.theta2))**2));
+				if(arc.theta1<=arc.theta2){
+					if(arc.theta1<=theta&&theta<=arc.theta2){
+						d=Math.min(d,Math.sqrt((x-arc.cx-Math.abs(this.radius)*Math.cos(theta))**2+(y-arc.cy-Math.abs(this.radius)*Math.sin(theta))**2));
+					}	
+				}else{
+					if(theta<=arc.theta2||arc.theta1<=theta){
+						d=Math.min(d,Math.sqrt((x-arc.cx-Math.abs(this.radius)*Math.cos(theta))**2+(y-arc.cy-Math.abs(this.radius)*Math.sin(theta))**2));
+					}
+				}
+			}
+			
+			return d<=10;
 		}
-		
 	}
 	
 	let vertices=[new Vertex(100,100,10),new Vertex(200,100,10)];
-	let edges=[new Edge(vertices[0],vertices[1])];
+	let edges=[new Edge(vertices[0],vertices[1],300)];
 		
 	//グラフを描画する関数
 	function draw(){
@@ -164,7 +228,15 @@
 				draggedObject=vertices[i];
 				clickOffsetX=mouseX-vertices[i].x;
 				clickOffsetY=mouseY-vertices[i].y;
-				break;
+				return;
+			}
+		}
+		
+		//辺がクリックされたかを判定
+		for(let i=0;i<edges.length;i++){
+			if(edges[i].isPointOverlapping(mouseX,mouseY)){
+				console.log("辺がクリックされた");
+				return;
 			}
 		}
 	});
