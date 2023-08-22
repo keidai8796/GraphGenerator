@@ -10,7 +10,7 @@
 </head>
 <body>
 	<h1>離散グラフを生成するアプリです</h1>
-	<canvas id="canvas" width="600" height="600"></canvas>
+	<canvas id="canvas" width="1000" height="800"></canvas>
 	
 	<script>
 	const canvas=document.getElementById('canvas');
@@ -49,17 +49,76 @@
 			this.vertex1=vertex1;
 			this.vertex2=vertex2;
 			this.color='black';
+			this.radius=-300;
 		}
 		
 		//辺を描画する関数
 		draw(){
+			//直線の描画
 			ctx.beginPath();
 			ctx.moveTo(this.vertex1.x,this.vertex1.y);
 			ctx.lineTo(this.vertex2.x,this.vertex2.y);
 			ctx.strokeStyle=this.color;
 			ctx.lineWidth=2;
 			ctx.stroke();
+			
+			//2頂点の座標を通る半径rの弧の中心(cx1,cy1),(cx2,cy2)を求める
+			//連立方程式(x-x1)^2+(y-y1)^2=r^2,(x-x2)^2+(y-y2)^2=r^2を解く
+			//ax^2+bx+c=0の解の公式を使っている
+			let tmp=(this.vertex2.x**2-this.vertex1.x**2+this.vertex2.y**2-this.vertex1.y**2)/(2*(this.vertex2.y-this.vertex1.y))-this.vertex1.y;
+			let a=1+((this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y))**2;
+			let b=-2*(this.vertex1.x+(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*tmp);
+			let c=this.vertex1.x**2+tmp**2-this.radius**2;
+			let cx1=(-b+Math.sqrt(b**2-4*a*c))/(2*a);
+			let cx2=(-b-Math.sqrt(b**2-4*a*c))/(2*a);
+			let cy1=-(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*cx1+tmp+this.vertex1.y;
+			let cy2=-(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*cx2+tmp+this.vertex1.y;
+			
+			//外積が正の点を(cx1,cy1)とする
+			if((this.vertex2.x-this.vertex1.x)*(cy1-this.vertex1.y)-(this.vertex2.y-this.vertex1.y)*(cx1-this.vertex1.x)<0){
+				cx1=cx2+(cx2=cx1,0);
+				cy1=cy2+(cy2=cy1,0);
+			}
+			
+			//半径が負の時，逆側に弧を張るようにする
+			if(this.radius>0){
+				//小さい弧
+				ctx.beginPath();
+				ctx.arc(cx1,cy1,this.radius,Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1),Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1));
+				ctx.strokeStyle='red';
+				ctx.lineWidth=1;
+				ctx.stroke();
+				
+				//大きい弧
+				ctx.beginPath();
+				ctx.arc(cx2,cy2,this.radius,Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2),Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2));
+				ctx.strokeStyle='green';
+				ctx.lineWidth=1;
+				ctx.stroke();
+			}else{
+				//小さい弧
+				ctx.beginPath();
+				ctx.arc(cx2,cy2,-this.radius,Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2),Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2));
+				ctx.strokeStyle='red';
+				ctx.lineWidth=1;
+				ctx.stroke();
+				
+				//大きい弧
+				ctx.beginPath();
+				ctx.arc(cx1,cy1,-this.radius,Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1),Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1));
+				ctx.strokeStyle='green';
+				ctx.lineWidth=1;
+				ctx.stroke();
+			}
 		}
+		
+		//指定された座標が辺と重なっているかを判定する
+		isPointOverlapping(x,y){
+			let dx=this.x-x;
+			let dy=this.y-y;
+			return dx**2+dy**2<=this.radius**2;
+		}
+		
 	}
 	
 	let vertices=[new Vertex(100,100,10),new Vertex(200,100,10)];
