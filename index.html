@@ -48,16 +48,17 @@
 		constructor(vertex1,vertex2){
 			this.vertex1=vertex1;
 			this.vertex2=vertex2;
-			this.color='black';
+			this.color='red';
 			this.radius=-300;
 		}
 		
 		//辺を描画する関数
 		draw(){
 			//直線の描画
+			let theta=Math.atan2(this.vertex2.y-this.vertex1.y,this.vertex2.x-this.vertex1.x);
 			ctx.beginPath();
-			ctx.moveTo(this.vertex1.x,this.vertex1.y);
-			ctx.lineTo(this.vertex2.x,this.vertex2.y);
+			ctx.moveTo(this.vertex1.x+Math.cos(theta)*this.vertex1.radius,this.vertex1.y+Math.sin(theta)*this.vertex1.radius);
+			ctx.lineTo(this.vertex2.x-Math.cos(theta)*this.vertex2.radius,this.vertex2.y-Math.sin(theta)*this.vertex2.radius);
 			ctx.strokeStyle=this.color;
 			ctx.lineWidth=2;
 			ctx.stroke();
@@ -80,36 +81,47 @@
 				cy1=cy2+(cy2=cy1,0);
 			}
 			
+			//実際に描画する弧の中心と偏角を決定
+			let cx,cy;
+			let theta1,theta2;
+			
 			//半径が負の時，逆側に弧を張るようにする
 			if(this.radius>0){
-				//小さい弧
-				ctx.beginPath();
-				ctx.arc(cx1,cy1,this.radius,Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1),Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1));
-				ctx.strokeStyle='red';
-				ctx.lineWidth=1;
-				ctx.stroke();
-				
-				//大きい弧
-				ctx.beginPath();
-				ctx.arc(cx2,cy2,this.radius,Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2),Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2));
-				ctx.strokeStyle='green';
-				ctx.lineWidth=1;
-				ctx.stroke();
+				//弧を大きく表示するような機能を後で実装するかも
+				if(true){
+					//小さい弧
+					theta1=Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1)+Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					theta2=Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1)-Math.acos(1-this.vertex2.radius**2/(2*this.radius**2));
+					cx=cx1;
+					cy=cy1;
+				}else{
+					//大きい弧
+					theta1=Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2)+Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					theta2=Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2)-Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					cx=cx2;
+					cy=cy2;
+				}
 			}else{
-				//小さい弧
-				ctx.beginPath();
-				ctx.arc(cx2,cy2,-this.radius,Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2),Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2));
-				ctx.strokeStyle='red';
-				ctx.lineWidth=1;
-				ctx.stroke();
-				
-				//大きい弧
-				ctx.beginPath();
-				ctx.arc(cx1,cy1,-this.radius,Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1),Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1));
-				ctx.strokeStyle='green';
-				ctx.lineWidth=1;
-				ctx.stroke();
+				if(true){
+					//小さい弧
+					theta1=Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2)+Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					theta2=Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2)-Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					cx=cx2;
+					cy=cy2;
+				}else{
+					//大きい弧
+					theta1=Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1)+Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					theta2=Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1)-Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					cx=cx1;
+					cy=cy1;
+				}
 			}
+			
+			ctx.beginPath();
+			ctx.arc(cx,cy,Math.abs(this.radius),theta1,theta2);
+			ctx.strokeStyle=this.color;
+			ctx.lineWidth=2;
+			ctx.stroke();
 		}
 		
 		//指定された座標が辺と重なっているかを判定する
