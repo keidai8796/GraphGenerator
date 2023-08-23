@@ -3,14 +3,40 @@
 <head>
 	<title>GraphGenerator</title>
 	<style>
+		#graph{
+			display:flex;
+		}
 		#canvas{
 			border:1px solid black;
+		}
+		#settings{
+			width:600px;
+			margin-left:30px;
+		}
+		#graph-settings{
+			margin-bottom:20px;
+			border-bottom:1px solid black;
 		}
 	</style>
 </head>
 <body>
 	<h1>離散グラフを生成するアプリです</h1>
-	<canvas id="canvas" width="1000" height="800"></canvas>
+	<div id="graph">
+		<canvas id="canvas" width="600" height="600"></canvas>
+		<div id="settings">
+			<div id="graph-settings">
+				クリックモード：
+				<select onchange="changeClickMode(this)">
+					<option value="moveVertex">頂点を移動</option>
+					<option value="addEdge">辺を追加</option>
+				</select>
+				<br>
+				<input type="button" value="頂点を追加" onclick="addVertex()">
+				<br><br>
+			</div>
+			<div id="object-settings"></div>
+		</div>
+	</div>
 	
 	<script>
 	const canvas=document.getElementById('canvas');
@@ -132,7 +158,7 @@
 		
 		//辺を描画する関数
 		draw(){
-			if((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)<=(this.vertex1.radius+this.vertex2.radius)**2){
+			if((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)**2<=(this.vertex1.radius+this.vertex2.radius)**2){
 				return;
 			}
 			
@@ -156,7 +182,7 @@
 		
 		//指定された座標が辺と重なっているかを判定する
 		isPointOverlapping(x,y){
-			if((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)<=(this.vertex1.radius+this.vertex2.radius)**2){
+			if((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)**2<=(this.vertex1.radius+this.vertex2.radius)**2){
 				return;
 			}
 			
@@ -198,8 +224,8 @@
 	}
 	
 	let vertices=[new Vertex(100,100,10),new Vertex(200,100,10)];
-	let edges=[new Edge(vertices[0],vertices[1],300)];
-		
+	let edges=[new Edge(vertices[0],vertices[1],100)];
+	
 	//グラフを描画する関数
 	function draw(){
 		//canvasを初期化
@@ -212,8 +238,33 @@
 		edges.forEach((edge)=>edge.draw());
 	}
 	
+	let clickMode="moveVertex";
+	let selectedVertex=null;
 	let draggedObject=null;
 	let clickOffsetX,clickOffsetY;
+	
+	function changeClickMode(mode){
+		clickMode=mode.value;
+		switch(clickMode){
+			case "moveVertex":
+				selectedVertex=null;
+				break;
+			case "addedge":
+				draggedObject=null;
+				break;
+			default:
+				break;
+		}
+	}
+	
+	function setFocusObject(object){
+		if(object instanceof Vertex){
+			console.log("vertex");
+		}
+		if(object instanceof Edge){
+			console.log("edge");
+		}
+	}
 	
 	//マウスがクリックされたときの処理
 	canvas.addEventListener('mousedown',(e)=>{
@@ -225,9 +276,19 @@
 		//頂点がクリックされたかを判定
 		for(let i=0;i<vertices.length;i++){
 			if(vertices[i].isPointOverlapping(mouseX,mouseY)){
-				draggedObject=vertices[i];
-				clickOffsetX=mouseX-vertices[i].x;
-				clickOffsetY=mouseY-vertices[i].y;
+				switch(clickMode){
+					case "moveVertex":
+						draggedObject=vertices[i];
+						clickOffsetX=mouseX-vertices[i].x;
+						clickOffsetY=mouseY-vertices[i].y;
+						break;
+					case "addEdge":
+						selectedVertex=vertices[i];
+						break;
+					default:
+						break;
+				}
+				setFocusObject(vertices[i]);
 				return;
 			}
 		}
@@ -235,7 +296,7 @@
 		//辺がクリックされたかを判定
 		for(let i=0;i<edges.length;i++){
 			if(edges[i].isPointOverlapping(mouseX,mouseY)){
-				console.log("辺がクリックされた");
+				setFocusObject(edges[i]);
 				return;
 			}
 		}
@@ -243,20 +304,44 @@
 	
 	//マウスが移動したときの処理
 	canvas.addEventListener('mousemove',(e)=>{
-		if(draggedObject!=null){
-			const rect=canvas.getBoundingClientRect();
-			let mouseX=e.clientX-rect.left;
-			let mouseY=e.clientY-rect.top;
+		const rect=canvas.getBoundingClientRect();
+		let mouseX=e.clientX-rect.left;
+		let mouseY=e.clientY-rect.top;
+		if(draggedObject!=null){		
 			draggedObject.x=mouseX-clickOffsetX;
 			draggedObject.y=mouseY-clickOffsetY;
 			draw();
 		}
+		if(selectedVertex!=null){
+			draw();
+			new Edge(selectedVertex,new Vertex(mouseX,mouseY,0)).draw();
+		}
 	});
 	
 	//マウスボタンが離されたときの処理
-	canvas.addEventListener('mouseup',()=>{
+	canvas.addEventListener('mouseup',(e)=>{
+		if(selectedVertex!=null){
+			const rect=canvas.getBoundingClientRect();
+			let mouseX=e.clientX-rect.left;
+			let mouseY=e.clientY-rect.top;
+			for(let i=0;i<vertices.length;i++){
+				if(vertices[i].isPointOverlapping(mouseX,mouseY)){
+					edges.push(new Edge(selectedVertex,vertices[i],100));
+					break;
+				}
+			}
+		}
 		draggedObject=null;
+		selectedVertex=null;
+		draw();
 	});
+	
+	//頂点を追加する関数
+	function addVertex(){
+		const rect=canvas.getBoundingClientRect();
+		vertices.push(new Vertex(Math.random()*rect.width,Math.random()*rect.height,10));
+		draw();
+	}
 	
 	draw();
 	
