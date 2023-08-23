@@ -26,7 +26,7 @@
 		<div id="settings">
 			<div id="graph-settings">
 				クリックモード：
-				<select onchange="changeClickMode(this)">
+				<select onchange="changeClickMode(this.value)">
 					<option value="moveVertex">頂点を移動</option>
 					<option value="addEdge">辺を追加</option>
 				</select>
@@ -49,15 +49,26 @@
 			this.x=x;
 			this.y=y;
 			this.radius=radius;
-			this.color='black'
+			this.fillColor='black';
+			this.borderColor='black';
+			this.fill=false;
+			this.edges=[];
 		}
 		
 		//頂点を描画する関数
 		draw(){
+			if(this.fill){
+				ctx.beginPath();
+				ctx.arc(this.x,this.y,Math.abs(this.radius),0,2*Math.PI);
+				ctx.fillStyle=this.fillColor;
+				ctx.fill();
+			}
+			
 			ctx.beginPath();
-			ctx.arc(this.x,this.y,this.radius,0,2*Math.PI);
-			ctx.fillStyle=this.color;
-			ctx.fill();
+			ctx.arc(this.x,this.y,Math.abs(this.radius),0,2*Math.PI);
+			ctx.strokeStyle=this.borderColor;
+			ctx.lineWidth=1;
+			ctx.stroke();
 		}
 		
 		//指定された座標が頂点と重なっているかを判定			
@@ -74,8 +85,11 @@
 		constructor(vertex1,vertex2,radius){
 			this.vertex1=vertex1;
 			this.vertex2=vertex2;
-			this.color='red';
+			this.color='black';
 			this.radius=radius;
+			this.shape='line';
+			vertex1.edges.push(this);
+			vertex2.edges.push(this);
 		}
 		
 		//直線の始点と終点を計算する関数
@@ -162,22 +176,26 @@
 				return;
 			}
 			
-			//直線の描画
-			let line=this.calcLine();
-			ctx.beginPath();
-			ctx.moveTo(line.x1,line.y1);
-			ctx.lineTo(line.x2,line.y2);
-			ctx.strokeStyle=this.color;
-			ctx.lineWidth=2;
-			ctx.stroke();
+			if(this.shape=='line'){
+				//直線の描画
+				let line=this.calcLine();
+				ctx.beginPath();
+				ctx.moveTo(line.x1,line.y1);
+				ctx.lineTo(line.x2,line.y2);
+				ctx.strokeStyle=this.color;
+				ctx.lineWidth=1;
+				ctx.stroke();
+			}
 			
-			//弧の描画
-			let arc=this.calcArc();
-			ctx.beginPath();
-			ctx.arc(arc.cx,arc.cy,Math.abs(this.radius),arc.theta1,arc.theta2);
-			ctx.strokeStyle=this.color;
-			ctx.lineWidth=2;
-			ctx.stroke();
+			if(this.shape=='arc'){
+				//弧の描画
+				let arc=this.calcArc();
+				ctx.beginPath();
+				ctx.arc(arc.cx,arc.cy,Math.abs(this.radius),arc.theta1,arc.theta2);
+				ctx.strokeStyle=this.color;
+				ctx.lineWidth=1;
+				ctx.stroke();
+			}
 		}
 		
 		//指定された座標が辺と重なっているかを判定する
@@ -189,7 +207,7 @@
 			let d=1e9;
 			
 			//それぞれ線分の端点と微分が0となる点で線との距離を計算して最小値を得る
-			if(true){
+			if(this.shape=='line'){
 				//直線との判定
 				let line=this.calcLine();
 				
@@ -201,7 +219,9 @@
 						d=Math.min(d,Math.sqrt((line.x1+(line.x2-line.x1)*t-x)**2+(line.y1+(line.y2-line.y1)*t-y)**2));
 					}
 				}
-			}else{
+			}
+			
+			if(this.shape=='arc'){
 				//弧との判定
 				let arc=this.calcArc();
 				let theta=Math.atan2(y-arc.cy,x-arc.cx);
@@ -223,7 +243,7 @@
 		}
 	}
 	
-	let vertices=[new Vertex(100,100,10),new Vertex(200,100,10)];
+	let vertices=[new Vertex(100,100,5),new Vertex(200,100,5)];
 	let edges=[new Edge(vertices[0],vertices[1],100)];
 	
 	//グラフを描画する関数
@@ -242,9 +262,10 @@
 	let selectedVertex=null;
 	let draggedObject=null;
 	let clickOffsetX,clickOffsetY;
+	let forcusObject;
 	
 	function changeClickMode(mode){
-		clickMode=mode.value;
+		clickMode=mode;
 		switch(clickMode){
 			case "moveVertex":
 				selectedVertex=null;
@@ -258,8 +279,26 @@
 	}
 	
 	function setFocusObject(object){
+		forcusObject=object;
+		let container=document.getElementById("object-settings");
+		container.innerHTML='';
 		if(object instanceof Vertex){
-			console.log("vertex");
+			let deleteButton=document.createElement('input');
+			deleteButton.type='button';
+			deleteButton.value='削除'
+			deleteButton.onclick=function(){
+				for(let i=0;i<forcusObject.edges.length;i++){
+					edges=edges.filter(function(edge){
+						return edge!=forcusObject.edges[i];
+					});
+				}
+				vertices=vertices.filter(function(vertex){
+					return vertex!=forcusObject;
+				});
+				forcusObject=null;
+				draw();
+			};
+			container.appendChild(deleteButton);
 		}
 		if(object instanceof Edge){
 			console.log("edge");
@@ -339,7 +378,7 @@
 	//頂点を追加する関数
 	function addVertex(){
 		const rect=canvas.getBoundingClientRect();
-		vertices.push(new Vertex(Math.random()*rect.width,Math.random()*rect.height,10));
+		vertices.push(new Vertex(Math.random()*rect.width,Math.random()*rect.height,5));
 		draw();
 	}
 	
