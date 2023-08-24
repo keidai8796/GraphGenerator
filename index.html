@@ -118,6 +118,11 @@
 		updateRadius(x,y){
 			let x1=this.vertex1.x,y1=this.vertex1.y;
 			let x2=this.vertex2.x,y2=this.vertex2.y;
+			if(this.vertex1==this.vertex2){
+				this.radius=(Math.sqrt((x1-x)**2+(y1-y)**2)-this.vertex1.radius/2)/2;
+				this.selfLoopAngle=Math.atan2(y-y1,x-x1)*180/Math.PI;
+				return;
+			}
 			if((x-x2)*(y-y1)==(x-x1)*(y-y2)){
 				return;
 			}
