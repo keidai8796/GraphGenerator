@@ -107,51 +107,84 @@
 		//直線の始点と終点を計算する関数
 		calcLine(){
 			let theta=Math.atan2(this.vertex2.y-this.vertex1.y,this.vertex2.x-this.vertex1.x);
-			let x1=this.vertex1.x+Math.cos(theta)*this.vertex1.radius;
-			let y1=this.vertex1.y+Math.sin(theta)*this.vertex1.radius;
-			let x2=this.vertex2.x-Math.cos(theta)*this.vertex2.radius;
-			let y2=this.vertex2.y-Math.sin(theta)*this.vertex2.radius;
+			let x1=this.vertex1.x+Math.cos(theta)*(this.vertex1.radius+this.vertex1.borderWidth/2);
+			let y1=this.vertex1.y+Math.sin(theta)*(this.vertex1.radius+this.vertex1.borderWidth/2);
+			let x2=this.vertex2.x-Math.cos(theta)*(this.vertex2.radius+this.vertex2.borderWidth/2);
+			let y2=this.vertex2.y-Math.sin(theta)*(this.vertex2.radius+this.vertex2.borderWidth/2);
 			return {x1:x1,y1:y1,x2:x2,y2:y2};
+		}
+		
+		//弧を点(x,y)を通るように更新
+		updateRadius(x,y){
+			let x1=this.vertex1.x,y1=this.vertex1.y;
+			let x2=this.vertex2.x,y2=this.vertex2.y;
+			if((x-x2)*(y-y1)==(x-x1)*(y-y2)){
+				return;
+			}
+			let cx,cy,r;
+			if(y==y1){
+				cx=(x+x1)/2;
+				cy=((x2-cx)**2-(x-cx)**2+y2**2-y**2)/(2*(y2-y));
+			}else if(y==y2){
+				cx=(x+x2)/2;
+				cy=((x1-cx)**2-(x-cx)**2+y1**2-y**2)/(2*(y1-y));
+			}else{
+				cx=((x**2-x2**2+y**2-y2**2)/(y-y2)-(x**2-x1**2+y**2-y1**2)/(y-y1))/((x-x2)/(y-y2)-(x-x1)/(y-y1))/2;
+				cy=(-(x-x1)*cx+(x**2-x1**2+y**2-y1**2)/2)/(y-y1);
+			}
+			r=Math.sqrt((x-cx)**2+(y-cy)**2);
+			if((x2-x1)*(y-y1)-(y2-y1)*(x-x1)>0){
+				r*=-1;
+			}
+			this.radius=r;
+			if(((x2-x1)*(cy-y1)-(y2-y1)*(cx-x1)<0)!=((x2-x1)*(y-y1)-(y2-y1)*(x-x1)<0)){
+				this.largeArc=false;
+			}else{
+				this.largeArc=true;
+			}
 		}
 		
 		//弧の中心と角度を計算する関数
 		calcArc(){
+			let x1=this.vertex1.x,y1=this.vertex1.y;
+			let r1=this.vertex1.radius,w1=this.vertex1.borderWidth;
+			let x2=this.vertex2.x,y2=this.vertex2.y;
+			let r2=this.vertex2.radius,w2=this.vertex2.borderWidth;
+			let r=Math.abs(this.radius);
 			//自己ループの場合
 			if(this.vertex1==this.vertex2){
-				let r=Math.abs(this.radius);
-				let cx=this.vertex1.x+(r+this.vertex1.radius/2)*Math.cos(this.selfLoopAngle/180*Math.PI);
-				let cy=this.vertex1.y+(r+this.vertex1.radius/2)*Math.sin(this.selfLoopAngle/180*Math.PI);
-				let theta1=Math.atan2(this.vertex1.y-cy,this.vertex1.x-cx)+Math.acos(((r+this.vertex1.radius/2)**2+r**2-this.vertex1.radius**2)/(2*r*(r+this.vertex1.radius/2)));
-				let theta2=Math.atan2(this.vertex1.y-cy,this.vertex1.x-cx)-Math.acos(((r+this.vertex1.radius/2)**2+r**2-this.vertex1.radius**2)/(2*r*(r+this.vertex1.radius/2)));
+				let cx=x1+(r+r1/2)*Math.cos(this.selfLoopAngle/180*Math.PI);
+				let cy=y1+(r+r1/2)*Math.sin(this.selfLoopAngle/180*Math.PI);
+				let theta1=Math.atan2(y1-cy,x1-cx)+Math.acos(((r+r1/2)**2+r**2-r1**2)/(2*r*(r+r1/2)));
+				let theta2=Math.atan2(y1-cy,x1-cx)-Math.acos(((r+r1/2)**2+r**2-r1**2)/(2*r*(r+r1/2)));
 				return {cx:cx,cy:cy,theta1:theta1,theta2:theta2,r:r};
 			}
 			
 			//2頂点の座標を通る半径rの弧の中心(cx1,cy1),(cx2,cy2)を求める
 			let cx1,cx2,cy1,cy2;
-			let r=Math.abs(this.radius);
 			
-			r=Math.max(r,Math.sqrt((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)**2)/2+10);
+			r=Math.max(r,Math.sqrt((x1-x2)**2+(y1-y2)**2)/2+0.01);
 			
-			if(this.vertex1.y==this.vertex2.y){
-				cx1=(this.vertex1.x+this.vertex2.x)/2;
+			if(y1==y2){
+				cx1=(x1+x2)/2;
 				cx2=cx1;
-				cy1=this.vertex1.y+Math.sqrt(r**2-((this.vertex2.x-this.vertex1.x)/2)**2);
-				cy2=this.vertex1.y-Math.sqrt(r**2-((this.vertex2.x-this.vertex1.x)/2)**2);
+				cy1=y1+Math.sqrt(r**2-((x2-x1)/2)**2);
+				cy2=y1-Math.sqrt(r**2-((x2-x1)/2)**2);
 			}else{
 				//連立方程式(x-x1)^2+(y-y1)^2=r^2,(x-x2)^2+(y-y2)^2=r^2を解く
 				//ax^2+bx+c=0の解の公式を使っている
-				let tmp=(this.vertex2.x**2-this.vertex1.x**2+this.vertex2.y**2-this.vertex1.y**2)/(2*(this.vertex2.y-this.vertex1.y))-this.vertex1.y;
-				let a=1+((this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y))**2;
-				let b=-2*(this.vertex1.x+(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*tmp);
-				let c=this.vertex1.x**2+tmp**2-r**2;
+				let tmp=(x2**2-x1**2+y2**2-y1**2)/(2*(y2-y1))-y1;
+				let a=1+((x2-x1)/(y2-y1))**2;
+				let b=-2*(x1+(x2-x1)/(y2-y1)*tmp);
+				let c=x1**2+tmp**2-r**2;
 				cx1=(-b+Math.sqrt(b**2-4*a*c))/(2*a);
 				cx2=(-b-Math.sqrt(b**2-4*a*c))/(2*a);
-				cy1=-(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*cx1+tmp+this.vertex1.y;
-				cy2=-(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*cx2+tmp+this.vertex1.y;
+				cy1=-(x2-x1)/(y2-y1)*cx1+tmp+y1;
+				cy2=-(x2-x1)/(y2-y1)*cx2+tmp+y1;
 			}
 			
 			//外積が正の点を(cx1,cy1)とする
-			if((this.vertex2.x-this.vertex1.x)*(cy1-this.vertex1.y)-(this.vertex2.y-this.vertex1.y)*(cx1-this.vertex1.x)<0){
+			if((x2-x1)*(cy1-y1)-(y2-y1)*(cx1-x1)<0){
 				cx1=cx2+(cx2=cx1,0);
 				cy1=cy2+(cy2=cy1,0);
 			}
@@ -164,28 +197,28 @@
 			if(this.radius>0){
 				if(!this.largeArc){
 					//小さい弧
-					theta1=Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1)+Math.acos(1-this.vertex1.radius**2/(2*r**2));
-					theta2=Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1)-Math.acos(1-this.vertex2.radius**2/(2*r**2));
+					theta1=Math.atan2(y1-cy1,x1-cx1)+Math.acos(1-(r1+w1/2)**2/(2*r**2));
+					theta2=Math.atan2(y2-cy1,x2-cx1)-Math.acos(1-(r2+w2/2)**2/(2*r**2));
 					cx=cx1;
 					cy=cy1;
 				}else{
 					//大きい弧
-					theta1=Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2)+Math.acos(1-this.vertex1.radius**2/(2*r**2));
-					theta2=Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2)-Math.acos(1-this.vertex2.radius**2/(2*r**2));
+					theta1=Math.atan2(y1-cy2,x1-cx2)+Math.acos(1-(r1+w1/2)**2/(2*r**2));
+					theta2=Math.atan2(y2-cy2,x2-cx2)-Math.acos(1-(r2+w2/2)**2/(2*r**2));
 					cx=cx2;
 					cy=cy2;
 				}
 			}else{
 				if(!this.largeArc){
 					//小さい弧
-					theta1=Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2)+Math.acos(1-this.vertex2.radius**2/(2*r**2));
-					theta2=Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2)-Math.acos(1-this.vertex1.radius**2/(2*r**2));
+					theta1=Math.atan2(y2-cy2,x2-cx2)+Math.acos(1-(r2+w2/2)**2/(2*r**2));
+					theta2=Math.atan2(y1-cy2,x1-cx2)-Math.acos(1-(r1+w1/2)**2/(2*r**2));
 					cx=cx2;
 					cy=cy2;
 				}else{
 					//大きい弧
-					theta1=Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1)+Math.acos(1-this.vertex2.radius**2/(2*r**2));
-					theta2=Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1)-Math.acos(1-this.vertex1.radius**2/(2*r**2));
+					theta1=Math.atan2(y2-cy1,x2-cx1)+Math.acos(1-(r2+w2/2)**2/(2*r**2));
+					theta2=Math.atan2(y1-cy1,x1-cx1)-Math.acos(1-(r1+w1/2)**2/(2*r**2));
 					cx=cx1;
 					cy=cy1;
 				}
@@ -929,17 +962,13 @@
 		//頂点がクリックされたかを判定
 		for(let i=0;i<vertices.length;i++){
 			if(vertices[i].isPointOverlapping(mouseX,mouseY)){
-				switch(clickMode){
-					case "moveVertex":
-						draggedObject=vertices[i];
-						clickOffsetX=mouseX-vertices[i].x;
-						clickOffsetY=mouseY-vertices[i].y;
-						break;
-					case "addEdge":
-						selectedVertex=vertices[i];
-						break;
-					default:
-						break;
+				if(clickMode=="moveVertex"||clickMode=="addVertex"){
+					draggedObject=vertices[i];
+					clickOffsetX=mouseX-vertices[i].x;
+					clickOffsetY=mouseY-vertices[i].y;
+				}
+				if(clickMode=="addEdge"){
+					selectedVertex=vertices[i];
 				}
 				setFocusObject(vertices[i]);
 				return;
@@ -949,6 +978,9 @@
 		//辺がクリックされたかを判定
 		for(let i=0;i<edges.length;i++){
 			if(edges[i].isPointOverlapping(mouseX,mouseY)){
+				draggedObject=edges[i];
+				clickOffsetX=mouseX-edges[i].x;
+				clickOffsetY=mouseY-edges[i].y;
 				setFocusObject(edges[i]);
 				return;
 			}
@@ -969,7 +1001,7 @@
 		const rect=canvas.getBoundingClientRect();
 		let mouseX=e.clientX-rect.left;
 		let mouseY=e.clientY-rect.top;
-		if(draggedObject!=null){		
+		if(draggedObject instanceof Vertex){		
 			draggedObject.x=mouseX-clickOffsetX;
 			draggedObject.y=mouseY-clickOffsetY;
 			if(focusObject==draggedObject){
@@ -979,6 +1011,20 @@
 				coordinateY.value=draggedObject.y;
 			}
 			draw();
+		}
+		if(draggedObject instanceof Edge){
+			if(draggedObject.arc){
+				draggedObject.updateRadius(mouseX,mouseY);
+				if(focusObject==draggedObject){
+					let radiusText=document.getElementById('radiusText');
+					let radiusRange=document.getElementById('radiusRange');
+					let largeArc=document.getElementById('largeArcCheckbox');
+					radiusText.value=focusObject.radius;
+					radiusRange.value=focusObject.radius;
+					largeArc.checked=focusObject.largeArc;
+				}
+				draw();
+			}
 		}
 		if(selectedVertex!=null){
 			draw();
