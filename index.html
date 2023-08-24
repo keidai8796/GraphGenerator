@@ -75,7 +75,7 @@
 		isPointOverlapping(x,y){
 			let dx=this.x-x;
 			let dy=this.y-y;
-			return dx**2+dy**2<=this.radius**2;
+			return dx**2+dy**2<=(this.radius+this.borderWidth)**2;
 		}
 	}
 	
@@ -87,7 +87,9 @@
 			this.vertex2=vertex2;
 			this.color='black';
 			this.radius=radius;
-			this.shape='line';
+			this.arc=false;
+			this.width=1;
+			this.largeArc=false;
 			vertex1.edges.push(this);
 			vertex2.edges.push(this);
 		}
@@ -106,19 +108,22 @@
 		calcArc(){
 			//2頂点の座標を通る半径rの弧の中心(cx1,cy1),(cx2,cy2)を求める
 			let cx1,cx2,cy1,cy2;
+			let r=Math.abs(this.radius);
+			
+			r=Math.max(r,Math.sqrt((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)**2)/2+10);
 			
 			if(this.vertex1.y==this.vertex2.y){
 				cx1=(this.vertex1.x+this.vertex2.x)/2;
 				cx2=cx1;
-				cy1=this.vertex1.y+Math.sqrt(this.radius**2-((this.vertex2.x-this.vertex1.x)/2)**2);
-				cy2=this.vertex1.y-Math.sqrt(this.radius**2-((this.vertex2.x-this.vertex1.x)/2)**2);
+				cy1=this.vertex1.y+Math.sqrt(r**2-((this.vertex2.x-this.vertex1.x)/2)**2);
+				cy2=this.vertex1.y-Math.sqrt(r**2-((this.vertex2.x-this.vertex1.x)/2)**2);
 			}else{
 				//連立方程式(x-x1)^2+(y-y1)^2=r^2,(x-x2)^2+(y-y2)^2=r^2を解く
 				//ax^2+bx+c=0の解の公式を使っている
 				let tmp=(this.vertex2.x**2-this.vertex1.x**2+this.vertex2.y**2-this.vertex1.y**2)/(2*(this.vertex2.y-this.vertex1.y))-this.vertex1.y;
 				let a=1+((this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y))**2;
 				let b=-2*(this.vertex1.x+(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*tmp);
-				let c=this.vertex1.x**2+tmp**2-this.radius**2;
+				let c=this.vertex1.x**2+tmp**2-r**2;
 				cx1=(-b+Math.sqrt(b**2-4*a*c))/(2*a);
 				cx2=(-b-Math.sqrt(b**2-4*a*c))/(2*a);
 				cy1=-(this.vertex2.x-this.vertex1.x)/(this.vertex2.y-this.vertex1.y)*cx1+tmp+this.vertex1.y;
@@ -137,65 +142,62 @@
 			
 			//半径が負の時，逆側に弧を張るようにする
 			if(this.radius>0){
-				//弧を大きく表示するような機能を後で実装するかも
-				if(true){
+				if(!this.largeArc){
 					//小さい弧
-					theta1=Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1)+Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
-					theta2=Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1)-Math.acos(1-this.vertex2.radius**2/(2*this.radius**2));
+					theta1=Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1)+Math.acos(1-this.vertex1.radius**2/(2*r**2));
+					theta2=Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1)-Math.acos(1-this.vertex2.radius**2/(2*r**2));
 					cx=cx1;
 					cy=cy1;
 				}else{
 					//大きい弧
-					theta1=Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2)+Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
-					theta2=Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2)-Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					theta1=Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2)+Math.acos(1-this.vertex1.radius**2/(2*r**2));
+					theta2=Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2)-Math.acos(1-this.vertex1.radius**2/(2*r**2));
 					cx=cx2;
 					cy=cy2;
 				}
 			}else{
-				if(true){
+				if(!this.largeArc){
 					//小さい弧
-					theta1=Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2)+Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
-					theta2=Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2)-Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					theta1=Math.atan2(this.vertex2.y-cy2,this.vertex2.x-cx2)+Math.acos(1-this.vertex1.radius**2/(2*r**2));
+					theta2=Math.atan2(this.vertex1.y-cy2,this.vertex1.x-cx2)-Math.acos(1-this.vertex1.radius**2/(2*r**2));
 					cx=cx2;
 					cy=cy2;
 				}else{
 					//大きい弧
-					theta1=Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1)+Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
-					theta2=Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1)-Math.acos(1-this.vertex1.radius**2/(2*this.radius**2));
+					theta1=Math.atan2(this.vertex2.y-cy1,this.vertex2.x-cx1)+Math.acos(1-this.vertex1.radius**2/(2*r**2));
+					theta2=Math.atan2(this.vertex1.y-cy1,this.vertex1.x-cx1)-Math.acos(1-this.vertex1.radius**2/(2*r**2));
 					cx=cx1;
 					cy=cy1;
 				}
 			}
 			
-			return {cx:cx,cy:cy,theta1:theta1,theta2:theta2};
+			return {cx:cx,cy:cy,theta1:theta1,theta2:theta2,r:r};
 		}
 		
 		//辺を描画する関数
 		draw(){
 			if((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)**2<=(this.vertex1.radius+this.vertex2.radius)**2){
-				console.log(this.vertex1.x+" "+this.vertex2.x+" "+this.vertex1.y+" "+this.vertex2.y+" "+this.vertex1.radius+" "+this.vertex2.radius);
-				console.log((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)**2+" "+(this.vertex1.radius+this.vertex2.radius));
 				return;
 			}
 			
-			if(this.shape=='line'){
+			if(!this.arc){
 				//直線の描画
 				let line=this.calcLine();
 				ctx.beginPath();
 				ctx.moveTo(line.x1,line.y1);
 				ctx.lineTo(line.x2,line.y2);
 				ctx.strokeStyle=this.color;
-				ctx.lineWidth=1;
+				ctx.lineWidth=this.width;
 				ctx.stroke();
 			}
 			
-			if(this.shape=='arc'){
+			if(this.arc){
 				//弧の描画
 				let arc=this.calcArc();
 				ctx.beginPath();
-				ctx.arc(arc.cx,arc.cy,Math.abs(this.radius),arc.theta1,arc.theta2);
+				ctx.arc(arc.cx,arc.cy,arc.r,arc.theta1,arc.theta2);
 				ctx.strokeStyle=this.color;
-				ctx.lineWidth=1;
+				ctx.lineWidth=this.width;
 				ctx.stroke();
 			}
 		}
@@ -209,7 +211,7 @@
 			let d=1e9;
 			
 			//それぞれ線分の端点と微分が0となる点で線との距離を計算して最小値を得る
-			if(this.shape=='line'){
+			if(!this.arc){
 				//直線との判定
 				let line=this.calcLine();
 				
@@ -223,20 +225,20 @@
 				}
 			}
 			
-			if(this.shape=='arc'){
+			if(this.arc){
 				//弧との判定
 				let arc=this.calcArc();
 				let theta=Math.atan2(y-arc.cy,x-arc.cx);
 				
-				d=Math.min(d,Math.sqrt((x-arc.cx-Math.abs(this.radius)*Math.cos(arc.theta1))**2+(y-arc.cy-Math.abs(this.radius)*Math.sin(arc.theta1))**2));
-				d=Math.min(d,Math.sqrt((x-arc.cx-Math.abs(this.radius)*Math.cos(arc.theta2))**2+(y-arc.cy-Math.abs(this.radius)*Math.sin(arc.theta2))**2));
+				d=Math.min(d,Math.sqrt((x-arc.cx-arc.r*Math.cos(arc.theta1))**2+(y-arc.cy-arc.r*Math.sin(arc.theta1))**2));
+				d=Math.min(d,Math.sqrt((x-arc.cx-arc.r*Math.cos(arc.theta2))**2+(y-arc.cy-arc.r*Math.sin(arc.theta2))**2));
 				if(arc.theta1<=arc.theta2){
 					if(arc.theta1<=theta&&theta<=arc.theta2){
-						d=Math.min(d,Math.sqrt((x-arc.cx-Math.abs(this.radius)*Math.cos(theta))**2+(y-arc.cy-Math.abs(this.radius)*Math.sin(theta))**2));
+						d=Math.min(d,Math.sqrt((x-arc.cx-arc.r*Math.cos(theta))**2+(y-arc.cy-arc.r*Math.sin(theta))**2));
 					}	
 				}else{
 					if(theta<=arc.theta2||arc.theta1<=theta){
-						d=Math.min(d,Math.sqrt((x-arc.cx-Math.abs(this.radius)*Math.cos(theta))**2+(y-arc.cy-Math.abs(this.radius)*Math.sin(theta))**2));
+						d=Math.min(d,Math.sqrt((x-arc.cx-arc.r*Math.cos(theta))**2+(y-arc.cy-arc.r*Math.sin(theta))**2));
 					}
 				}
 			}
@@ -291,56 +293,65 @@
 		//フォーカスしているオブジェクトによって表示内容を変える
 		if(object instanceof Vertex){
 			//座標の表示
+			let coordinateDiv=document.createElement('div');
+			coordinateDiv.id='coordinate'
 			let coordinateLabel=document.createElement('label');
-			coordinateLabel.textContent='頂点の座標　：x=';
-			container.appendChild(coordinateLabel);
+			coordinateLabel.textContent='頂点の座標　：';
+			coordinateDiv.appendChild(coordinateLabel);
 			
-			let coordinateTextX=document.createElement('input');
-			coordinateTextX.type='text';
-			coordinateTextX.id='coordinateX';
-			coordinateTextX.value=forcusObject.x;
-			coordinateTextX.size=1;
-			coordinateTextX.onchange=function(){
-				let x=parseFloat(coordinateTextX.value);
+			let coordinateXLabel=document.createElement('label')
+			coordinateXLabel.textContent='x=';
+			coordinateDiv.appendChild(coordinateXLabel);
+			
+			let coordinateXText=document.createElement('input');
+			coordinateXText.type='text';
+			coordinateXText.id='coordinateX';
+			coordinateXText.value=forcusObject.x;
+			coordinateXText.size=1;
+			coordinateXText.onchange=function(){
+				let x=parseFloat(coordinateXText.value);
 				if(!isNaN(x)){
 					if(x<=0)x=0;
 					if(x>=600)x=600;
-					coordinateTextX.value=x;
+					coordinateXText.value=x;
 					forcusObject.x=x;
 					draw();
 				}
 			}
-			container.appendChild(coordinateTextX);
+			coordinateDiv.appendChild(coordinateXText);
 			
-			let coordinateLabel2=document.createElement('label');
-			coordinateLabel2.textContent=', y=';
-			container.appendChild(coordinateLabel2);
+			let coordinateYLabel=document.createElement('label');
+			coordinateYLabel.textContent=', y=';
+			coordinateDiv.appendChild(coordinateYLabel);
 			
-			let coordinateTextY=document.createElement('input');
-			coordinateTextY.type='text';
-			coordinateTextY.id='coordinateY';
-			coordinateTextY.value=forcusObject.y;
-			coordinateTextY.size=1;
-			coordinateTextY.onchange=function(){
-				let y=parseFloat(coordinateTextY.value);
+			let coordinateYText=document.createElement('input');
+			coordinateYText.type='text';
+			coordinateYText.id='coordinateY';
+			coordinateYText.value=forcusObject.y;
+			coordinateYText.size=1;
+			coordinateYText.onchange=function(){
+				let y=parseFloat(coordinateYText.value);
 				if(!isNaN(y)){
 					if(y<=0)y=0;
 					if(y>=600)y=600;
-					coordinateTextY.value=y;
+					coordinateYText.value=y;
 					forcusObject.y=y;
 					draw();
 				}
 			}
-			container.appendChild(coordinateTextY);
-			container.appendChild(document.createElement('br'));
+			coordinateDiv.appendChild(coordinateYText);
+			container.appendChild(coordinateDiv);
 			
 			//頂点の半径の設定
+			let radiusDiv=document.createElement('div');
+			radiusDiv.id='radius';
 			let radiusLabel=document.createElement('label');
 			radiusLabel.textContent='頂点の半径　：';
-			container.appendChild(radiusLabel);
+			radiusDiv.appendChild(radiusLabel);
 			
-			let radiusDiv=document.createElement('div');
-			radiusDiv.style='display:inline-block;vertical-align:top;';
+			let radiusValueDiv=document.createElement('div');
+			radiusValueDiv.style='display:inline-block;vertical-align:top;';
+			radiusValueDiv.id='radiusValue';
 			let radiusText=document.createElement('input');
 			radiusText.type='text';
 			radiusText.id='radiusText';
@@ -357,8 +368,8 @@
 					draw();
 				}
 			}
-			radiusDiv.appendChild(radiusText);
-			radiusDiv.appendChild(document.createElement('br'));
+			radiusValueDiv.appendChild(radiusText);
+			radiusValueDiv.appendChild(document.createElement('br'));
 			
 			let radiusRange=document.createElement('input');
 			radiusRange.type='range';
@@ -372,38 +383,47 @@
 				document.getElementById('radiusText').value=r;
 				draw();
 			};
-			radiusDiv.appendChild(radiusRange);
+			radiusValueDiv.appendChild(radiusRange);
+			radiusDiv.appendChild(radiusValueDiv);
 			container.appendChild(radiusDiv);
-			container.appendChild(document.createElement('br'));
 			
-			//枠線の設定
+			
+			//枠線の色の設定
+			let borderColorDiv=document.createElement('div');
+			borderColorDiv.id='borderColor';
 			let borderColorLabel=document.createElement('label');
 			borderColorLabel.textContent='枠線の色　　：';
-			container.appendChild(borderColorLabel);
+			borderColorDiv.appendChild(borderColorLabel);
 			
-			let borderColorButton=document.createElement('input');
-			borderColorButton.type='color';
-			borderColorButton.value=forcusObject.borderColor;
-			borderColorButton.onchange=function(){
-				forcusObject.borderColor=borderColorButton.value;
+			let borderColorPicker=document.createElement('input');
+			borderColorPicker.type='color';
+			borderColorPicker.id='borderColorPicker';
+			borderColorPicker.value=forcusObject.borderColor;
+			borderColorPicker.onchange=function(){
+				forcusObject.borderColor=borderColorPicker.value;
 				draw();
 			};
-			container.appendChild(borderColorButton);
-			container.appendChild(document.createElement('br'));
+			borderColorDiv.appendChild(borderColorPicker);
+			container.appendChild(borderColorDiv);
 			
+			
+			//枠線の幅の設定
+			let borderWidthDiv=document.createElement('div');
+			borderWidthDiv.id='borderWidth';
 			let borderWidthLabel=document.createElement('label');
 			borderWidthLabel.textContent='枠線の幅　　：';
-			container.appendChild(borderWidthLabel);
+			borderWidthDiv.appendChild(borderWidthLabel);
 			
-			let borderWidthDiv=document.createElement('div');
-			borderWidthDiv.style='display:inline-block;vertical-align:top;';
+			let borderWidthValueDiv=document.createElement('div');
+			borderWidthValueDiv.style='display:inline-block;vertical-align:top;';
+			borderWidthValueDiv.id='borderWidthValue';
 			let borderWidthText=document.createElement('input');
 			borderWidthText.type='text';
 			borderWidthText.id='borderWidthText';
 			borderWidthText.size=14;
 			borderWidthText.value=forcusObject.borderWidth;
-			radiusText.onchange=function(){
-				let w=parseFloat(radiusText.value);
+			borderWidthText.onchange=function(){
+				let w=parseFloat(borderWidthText.value);
 				if(!isNaN(w)){
 					if(w<=1)w=1;
 					if(w>=10)w=10;
@@ -413,8 +433,8 @@
 					draw();
 				}
 			}
-			borderWidthDiv.appendChild(borderWidthText);
-			borderWidthDiv.appendChild(document.createElement('br'));
+			borderWidthValueDiv.appendChild(borderWidthText);
+			borderWidthValueDiv.appendChild(document.createElement('br'));
 			
 			let borderWidthRange=document.createElement('input');
 			borderWidthRange.type='range';
@@ -428,42 +448,51 @@
 				document.getElementById('borderWidthText').value=w;
 				draw();
 			};
-			borderWidthDiv.appendChild(borderWidthRange);
+			borderWidthValueDiv.appendChild(borderWidthRange);
+			borderWidthDiv.appendChild(borderWidthValueDiv);
 			container.appendChild(borderWidthDiv);
-			container.appendChild(document.createElement('br'));
+			
 			
 			//頂点の塗りつぶし設定
+			let fillDiv=document.createElement('div');
+			fillDiv.id='fill';
 			let fillLabel=document.createElement('label');
 			fillLabel.textContent='塗りつぶし　：';
-			container.appendChild(fillLabel);
+			fillDiv.appendChild(fillLabel);
 			
-			let fillButton=document.createElement('input');
-			fillButton.type='checkbox';
-			fillButton.id='fillButton'
-			fillButton.checked=forcusObject.fill;
-			fillButton.onclick=function(){
-				forcusObject.fill=fillButton.checked;
+			let fillCheckbox=document.createElement('input');
+			fillCheckbox.type='checkbox';
+			fillCheckbox.id='fillCheckbox';
+			fillCheckbox.checked=forcusObject.fill;
+			fillCheckbox.onclick=function(){
+				forcusObject.fill=fillCheckbox.checked;
 				draw();
 			};
-			container.appendChild(fillButton);
-			container.appendChild(document.createElement('br'));
+			fillDiv.appendChild(fillCheckbox);
+			container.appendChild(fillDiv);
 			
+			
+			//塗りつぶし色の設定
+			let fillColorDiv=document.createElement('div');
+			fillColorDiv.id='fillColor';
 			let fillColorLabel=document.createElement('label');
 			fillColorLabel.textContent='塗りつぶし色：';
-			container.appendChild(fillColorLabel);
+			fillColorDiv.appendChild(fillColorLabel);
 			
-			let fillColorButton=document.createElement('input');
-			fillColorButton.type='color';
-			fillColorButton.value=forcusObject.fillColor;
-			fillColorButton.onchange=function(){
-				forcusObject.fillColor=fillColorButton.value;
+			let fillColorPicker=document.createElement('input');
+			fillColorPicker.type='color';
+			fillColorPicker.id='fillColorPicker';
+			fillColorPicker.value=forcusObject.fillColor;
+			fillColorPicker.onchange=function(){
+				forcusObject.fillColor=fillColorPicker.value;
 				draw();
 			};
-			container.appendChild(fillColorButton);
-			container.appendChild(document.createElement('br'));
+			fillColorDiv.appendChild(fillColorPicker);
+			container.appendChild(fillColorDiv);
 			
 			let deleteButton=document.createElement('input');
 			deleteButton.type='button';
+			deleteButton.id='deleteVertex';
 			deleteButton.value='削除';
 			deleteButton.onclick=function(){
 				for(let i=0;i<forcusObject.edges.length;i++){
@@ -479,8 +508,155 @@
 			};
 			container.appendChild(deleteButton);
 		}
+		
 		if(object instanceof Edge){
-			console.log("edge");
+			//辺の色の設定
+			let edgeColorDiv=document.createElement('div');
+			edgeColorDiv.id='edgeColor';
+			let edgeColorLabel=document.createElement('label');
+			edgeColorLabel.textContent='辺の色　　：';
+			edgeColorDiv.appendChild(edgeColorLabel);
+			
+			let edgeColorPicker=document.createElement('input');
+			edgeColorPicker.type='color';
+			edgeColorPicker.id='edgeColorPicker';
+			edgeColorPicker.value=forcusObject.color;
+			edgeColorPicker.onchange=function(){
+				forcusObject.color=edgeColorPicker.value;
+				draw();
+			};
+			edgeColorDiv.appendChild(edgeColorPicker);
+			container.appendChild(edgeColorDiv);
+			
+			
+			//辺の幅の設定
+			let edgeWidthDiv=document.createElement('div');
+			edgeWidthDiv.id='edgeWidth';
+			let edgeWidthLabel=document.createElement('label');
+			edgeWidthLabel.textContent='辺の幅　　：';
+			edgeWidthDiv.appendChild(edgeWidthLabel);
+			
+			let edgeWidthValueDiv=document.createElement('div');
+			edgeWidthValueDiv.style='display:inline-block;vertical-align:top;';
+			edgeWidthValueDiv.id='edgeWidthValue';
+			let edgeWidthText=document.createElement('input');
+			edgeWidthText.type='text';
+			edgeWidthText.id='edgeWidthText';
+			edgeWidthText.size=14;
+			edgeWidthText.value=forcusObject.width;
+			edgeWidthText.onchange=function(){
+				let w=parseFloat(edgeWidthText.value);
+				if(!isNaN(w)){
+					if(w<=1)w=1;
+					if(w>=10)w=10;
+					edgeWidthWidthText.value=w;
+					forcusObject.width=w;
+					document.getElementById('edgeWidthRange').value=w;
+					draw();
+				}
+			}
+			edgeWidthValueDiv.appendChild(edgeWidthText);
+			edgeWidthValueDiv.appendChild(document.createElement('br'));
+			
+			let edgeWidthRange=document.createElement('input');
+			edgeWidthRange.type='range';
+			edgeWidthRange.id='edgeWidthRange';
+			edgeWidthRange.min=1;
+			edgeWidthRange.max=10;
+			edgeWidthRange.value=forcusObject.width;
+			edgeWidthRange.onchange=function(){
+				let w=parseFloat(edgeWidthRange.value);
+				forcusObject.width=w;
+				document.getElementById('edgeWidthText').value=w;
+				draw();
+			};
+			edgeWidthValueDiv.appendChild(edgeWidthRange);
+			edgeWidthDiv.appendChild(edgeWidthValueDiv);
+			container.appendChild(edgeWidthDiv);
+			
+			
+			//辺を円弧状にする設定
+			let arcDiv=document.createElement('div');
+			arcDiv.id='arc';
+			let arcLabel=document.createElement('label');
+			arcLabel.textContent='弧状に表示：';
+			arcDiv.appendChild(arcLabel);
+			
+			let arcCheckbox=document.createElement('input');
+			arcCheckbox.type='checkbox';
+			arcCheckbox.id='arcCheckbox';
+			arcCheckbox.checked=forcusObject.arc;
+			arcCheckbox.onclick=function(){
+				forcusObject.arc=arcCheckbox.checked;
+				draw();
+			};
+			arcDiv.appendChild(arcCheckbox);
+			container.appendChild(arcDiv);
+			
+			
+			//弧の半径の設定
+			let radiusDiv=document.createElement('div');
+			radiusDiv.id='radius';
+			let radiusLabel=document.createElement('label');
+			radiusLabel.textContent='弧の半径　：';
+			radiusDiv.appendChild(radiusLabel);
+			
+			let radiusValueDiv=document.createElement('div');
+			radiusValueDiv.style='display:inline-block; vertical-align:top;';
+			radiusValueDiv.id='radiusValue';
+			let radiusText=document.createElement('input');
+			radiusText.type='text';
+			radiusText.id='radiusText';
+			radiusText.size=14;
+			radiusText.value=forcusObject.radius;
+			radiusText.onchange=function(){
+				let r=parseFloat(radiusText.value);
+				if(!isNaN(r)){
+					if(r<=-1000)r=-1000;
+					if(r>=1000)r=1000;
+					radiusText.value=r;
+					forcusObject.radius=r;
+					document.getElementById('radiusRange').value=r;
+					draw();
+				}
+			}
+			radiusValueDiv.appendChild(radiusText);
+			radiusValueDiv.appendChild(document.createElement('br'));
+			
+			let radiusRange=document.createElement('input');
+			radiusRange.type='range';
+			radiusRange.id='radiusRange';
+			radiusRange.min=-1000;
+			radiusRange.max=1000;
+			radiusRange.value=forcusObject.radius;
+			radiusRange.onchange=function(){
+				let r=parseFloat(radiusRange.value);
+				forcusObject.radius=r;
+				document.getElementById('radiusText').value=r;
+				draw();
+			};
+			radiusValueDiv.appendChild(radiusRange);
+			radiusDiv.appendChild(radiusValueDiv);
+			container.appendChild(radiusDiv);
+			
+			
+			//弧を大きくする設定
+			let largeArcDiv=document.createElement('div');
+			largeArcDiv.id='largeArc';
+			let largeArcLabel=document.createElement('label');
+			largeArcLabel.textContent='大きい弧　：';
+			largeArcDiv.appendChild(largeArcLabel);
+			
+			let largeArcCheckbox=document.createElement('input');
+			largeArcCheckbox.type='checkbox';
+			largeArcCheckbox.id='largeArcCheckbox';
+			largeArcCheckbox.checked=forcusObject.largeArc;
+			largeArcCheckbox.onclick=function(){
+				forcusObject.largeArc=largeArcCheckbox.checked;
+				draw();
+			};
+			largeArcDiv.appendChild(largeArcCheckbox);
+			container.appendChild(largeArcDiv);
 		}
 	}
 	
@@ -520,7 +696,7 @@
 		}
 		
 		if(clickMode=='addVertex'){
-			setFocusObject(new Vertex(mouseX,mouseY,5));
+			setFocusObject(new Vertex(Math.floor(mouseX),Math.floor(mouseY),5));
 			vertices.push(forcusObject);
 			draw();
 		}
