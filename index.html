@@ -44,10 +44,11 @@
 	//頂点クラス
 	class Vertex{
 		//コンストラクタ
-		constructor(x,y,radius){
+		constructor(x,y,id){
 			this.x=x;
 			this.y=y;
-			this.radius=radius;
+			this.radius=5;
+			this.id=id;
 			this.fillColor='black';
 			this.borderColor='black';
 			this.borderWidth=1;
@@ -82,14 +83,23 @@
 	//辺クラス
 	class Edge{
 		//コンストラクタ
-		constructor(vertex1,vertex2,radius){
+		constructor(vertex1,vertex2,id){
 			this.vertex1=vertex1;
 			this.vertex2=vertex2;
+			this.radius=100;
+			this.id=id;
 			this.color='black';
-			this.radius=radius;
 			this.arc=false;
 			this.width=1;
 			this.largeArc=false;
+			this.arrowSize=10;
+			this.startArrow=false;
+			this.endArrow=false;
+			this.selfLoopAngle=0;
+			if(vertex1==vertex2){
+				this.arc=true;
+				this.radius=vertex1.radius*3;
+			}
 			vertex1.edges.push(this);
 			vertex2.edges.push(this);
 		}
@@ -106,6 +116,16 @@
 		
 		//弧の中心と角度を計算する関数
 		calcArc(){
+			//自己ループの場合
+			if(this.vertex1==this.vertex2){
+				let r=Math.abs(this.radius);
+				let cx=this.vertex1.x+(r+this.vertex1.radius/2)*Math.cos(this.selfLoopAngle/180*Math.PI);
+				let cy=this.vertex1.y+(r+this.vertex1.radius/2)*Math.sin(this.selfLoopAngle/180*Math.PI);
+				let theta1=Math.atan2(this.vertex1.y-cy,this.vertex1.x-cx)+Math.acos(((r+this.vertex1.radius/2)**2+r**2-this.vertex1.radius**2)/(2*r*(r+this.vertex1.radius/2)));
+				let theta2=Math.atan2(this.vertex1.y-cy,this.vertex1.x-cx)-Math.acos(((r+this.vertex1.radius/2)**2+r**2-this.vertex1.radius**2)/(2*r*(r+this.vertex1.radius/2)));
+				return {cx:cx,cy:cy,theta1:theta1,theta2:theta2,r:r};
+			}
+			
 			//2頂点の座標を通る半径rの弧の中心(cx1,cy1),(cx2,cy2)を求める
 			let cx1,cx2,cy1,cy2;
 			let r=Math.abs(this.radius);
@@ -174,10 +194,22 @@
 			return {cx:cx,cy:cy,theta1:theta1,theta2:theta2,r:r};
 		}
 		
+		drawArrow(x,y,theta){
+			ctx.beginPath();
+			ctx.moveTo(x,y);
+			ctx.lineTo(x+this.arrowSize*Math.cos(theta+Math.PI*3/4),y+this.arrowSize*Math.sin(theta+Math.PI*3/4));
+			ctx.lineTo(x+this.arrowSize*Math.cos(theta+Math.PI*5/4),y+this.arrowSize*Math.sin(theta+Math.PI*5/4));
+			ctx.moveTo(x,y);
+			ctx.fillStyle=this.color;
+			ctx.fill();
+		}
+		
 		//辺を描画する関数
 		draw(){
 			if((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)**2<=(this.vertex1.radius+this.vertex2.radius)**2){
-				return;
+				if(this.vertex1!=this.vertex2){
+					return;
+				}
 			}
 			
 			if(!this.arc){
@@ -189,6 +221,12 @@
 				ctx.strokeStyle=this.color;
 				ctx.lineWidth=this.width;
 				ctx.stroke();
+				if(this.startArrow){
+					this.drawArrow(line.x1,line.y1,Math.atan2(line.y1-line.y2,line.x1-line.x2));
+				}
+				if(this.endArrow){
+					this.drawArrow(line.x2,line.y2,Math.atan2(line.y2-line.y1,line.x2-line.x1));
+				}
 			}
 			
 			if(this.arc){
@@ -199,13 +237,29 @@
 				ctx.strokeStyle=this.color;
 				ctx.lineWidth=this.width;
 				ctx.stroke();
+				if(this.startArrow){
+					if(this.radius>0){
+						this.drawArrow(arc.cx+arc.r*Math.cos(arc.theta1),arc.cy+arc.r*Math.sin(arc.theta1),arc.theta1-Math.PI/2);
+					}else{
+						this.drawArrow(arc.cx+arc.r*Math.cos(arc.theta2),arc.cy+arc.r*Math.sin(arc.theta2),arc.theta2+Math.PI/2);
+					}
+				}
+				if(this.endArrow){
+					if(this.radius<0){
+						this.drawArrow(arc.cx+arc.r*Math.cos(arc.theta1),arc.cy+arc.r*Math.sin(arc.theta1),arc.theta1-Math.PI/2);
+					}else{
+						this.drawArrow(arc.cx+arc.r*Math.cos(arc.theta2),arc.cy+arc.r*Math.sin(arc.theta2),arc.theta2+Math.PI/2);
+					}
+				}
 			}
 		}
 		
 		//指定された座標が辺と重なっているかを判定する
 		isPointOverlapping(x,y){
 			if((this.vertex1.x-this.vertex2.x)**2+(this.vertex1.y-this.vertex2.y)**2<=(this.vertex1.radius+this.vertex2.radius)**2){
-				return;
+				if(this.vertex1!=this.vertex2){
+					return;
+				}
 			}
 			
 			let d=1e9;
@@ -247,8 +301,8 @@
 		}
 	}
 	
-	let vertices=[new Vertex(100,100,5),new Vertex(200,100,5)];
-	let edges=[new Edge(vertices[0],vertices[1],100)];
+	let vertices=[new Vertex(100,100,0),new Vertex(200,100,1)];
+	let edges=[new Edge(vertices[0],vertices[1],0)];
 	
 	//グラフを描画する関数
 	function draw(){
@@ -292,6 +346,13 @@
 		
 		//フォーカスしているオブジェクトによって表示内容を変える
 		if(object instanceof Vertex){
+			let vertexName=document.createElement('h4');
+			vertexName.id='vertexName';
+			let vertexNameLabel=document.createElement('label');
+			vertexNameLabel.textContent='頂点'+focusObject.id;
+			vertexName.appendChild(vertexNameLabel);
+			container.appendChild(vertexName);
+			
 			//座標の表示
 			let coordinateDiv=document.createElement('div');
 			coordinateDiv.id='coordinate'
@@ -514,6 +575,12 @@
 				vertices=vertices.filter(function(vertex){
 					return vertex!=focusObject;
 				});
+				for(let i=0;i<vertices.length;i++){
+					vertices[i].id=i;
+				}
+				for(let i=0;i<edges.length;i++){
+					edges[i].id=i;
+				}
 				setFocusObject(null);
 				draw();
 			};
@@ -521,11 +588,18 @@
 		}
 		
 		if(object instanceof Edge){
+			let edgeName=document.createElement('h4');
+			edgeName.id='edgeName';
+			let edgeNameLabel=document.createElement('label');
+			edgeNameLabel.textContent='辺'+focusObject.id;
+			edgeName.appendChild(edgeNameLabel);
+			container.appendChild(edgeName);
+			
 			//辺の色の設定
 			let edgeColorDiv=document.createElement('div');
 			edgeColorDiv.id='edgeColor';
 			let edgeColorLabel=document.createElement('label');
-			edgeColorLabel.textContent='辺の色　　：';
+			edgeColorLabel.textContent='辺の色　　　：';
 			edgeColorDiv.appendChild(edgeColorLabel);
 			
 			let edgeColorPicker=document.createElement('input');
@@ -544,7 +618,7 @@
 			let edgeWidthDiv=document.createElement('div');
 			edgeWidthDiv.id='edgeWidth';
 			let edgeWidthLabel=document.createElement('label');
-			edgeWidthLabel.textContent='辺の幅　　：';
+			edgeWidthLabel.textContent='辺の幅　　　：';
 			edgeWidthDiv.appendChild(edgeWidthLabel);
 			
 			let edgeWidthValueDiv=document.createElement('div');
@@ -589,8 +663,11 @@
 			//辺を円弧状にする設定
 			let arcDiv=document.createElement('div');
 			arcDiv.id='arc';
+			if(focusObject.vertex1==focusObject.vertex2){
+				arcDiv.style.display='none';
+			}
 			let arcLabel=document.createElement('label');
-			arcLabel.textContent='弧状に表示：';
+			arcLabel.textContent='円弧状に表示：';
 			arcDiv.appendChild(arcLabel);
 			
 			let arcCheckbox=document.createElement('input');
@@ -621,7 +698,7 @@
 				radiusDiv.style.display='none';
 			}
 			let radiusLabel=document.createElement('label');
-			radiusLabel.textContent='弧の半径　：';
+			radiusLabel.textContent='弧の半径　　：';
 			radiusDiv.appendChild(radiusLabel);
 			
 			let radiusValueDiv=document.createElement('div');
@@ -666,11 +743,11 @@
 			//弧を大きくする設定
 			let largeArcDiv=document.createElement('div');
 			largeArcDiv.id='largeArc';
-			if(!focusObject.arc){
+			if(!focusObject.arc||(focusObject.vertex1==focusObject.vertex2)){
 				largeArcDiv.style.display='none';
 			}
 			let largeArcLabel=document.createElement('label');
-			largeArcLabel.textContent='大きい弧　：';
+			largeArcLabel.textContent='弧を大きく　：';
 			largeArcDiv.appendChild(largeArcLabel);
 			
 			let largeArcCheckbox=document.createElement('input');
@@ -683,6 +760,138 @@
 			};
 			largeArcDiv.appendChild(largeArcCheckbox);
 			container.appendChild(largeArcDiv);
+			
+			
+			//矢印の表示の有無
+			let arrowDiv=document.createElement('div');
+			arrowDiv.id='coordinate'
+			let arrowLabel=document.createElement('label');
+			arrowLabel.textContent='矢印の有無　：';
+			arrowDiv.appendChild(arrowLabel);
+			
+			let startArrorLabel=document.createElement('label')
+			startArrorLabel.textContent='始点';
+			arrowDiv.appendChild(startArrorLabel);
+			
+			let startArrorCheckbox=document.createElement('input');
+			startArrorCheckbox.type='checkbox';
+			startArrorCheckbox.id='startArrow';
+			startArrorCheckbox.value=focusObject.startArrow;
+			startArrorCheckbox.onchange=function(){
+				focusObject.startArrow=startArrorCheckbox.checked;
+				draw();
+			}
+			arrowDiv.appendChild(startArrorCheckbox);
+			
+			let endArrorLabel=document.createElement('label')
+			endArrorLabel.textContent=' 終点';
+			arrowDiv.appendChild(endArrorLabel);
+			
+			let endArrorCheckbox=document.createElement('input');
+			endArrorCheckbox.type='checkbox';
+			endArrorCheckbox.id='endArrow';
+			endArrorCheckbox.value=focusObject.endArrow;
+			endArrorCheckbox.onchange=function(){
+				focusObject.endArrow=endArrorCheckbox.checked;
+				draw();
+			}
+			arrowDiv.appendChild(endArrorCheckbox);
+			container.appendChild(arrowDiv);
+			
+			
+			//矢印の大きさの設定
+			let arrowSizeDiv=document.createElement('div');
+			arrowSizeDiv.id='arrowSize';
+			let arrowSizeLabel=document.createElement('label');
+			arrowSizeLabel.textContent='矢印の大きさ：';
+			arrowSizeDiv.appendChild(arrowSizeLabel);
+			
+			let arrowSizeValueDiv=document.createElement('div');
+			arrowSizeValueDiv.style='display:inline-block;vertical-align:top;';
+			arrowSizeValueDiv.id='arrowSizeValue';
+			let arrowSizeText=document.createElement('input');
+			arrowSizeText.type='text';
+			arrowSizeText.id='arrowSizeText';
+			arrowSizeText.size=14;
+			arrowSizeText.value=focusObject.arrowSize;
+			arrowSizeText.onchange=function(){
+				let s=parseFloat(arrowSizeText.value);
+				if(!isNaN(s)){
+					if(s<=1)s=1;
+					if(s>=30)s=30;
+					arrowSizeText.value=s;
+					focusObject.arrowSize=s;
+					document.getElementById('arrowSizeRange').value=s;
+					draw();
+				}
+			}
+			arrowSizeValueDiv.appendChild(arrowSizeText);
+			arrowSizeValueDiv.appendChild(document.createElement('br'));
+			
+			let arrowSizeRange=document.createElement('input');
+			arrowSizeRange.type='range';
+			arrowSizeRange.id='arrowSizeRange';
+			arrowSizeRange.min=1;
+			arrowSizeRange.max=30;
+			arrowSizeRange.value=focusObject.arrowSize;
+			arrowSizeRange.onchange=function(){
+				let s=parseFloat(arrowSizeRange.value);
+				focusObject.arrowSize=s;
+				document.getElementById('arrowSizeText').value=s;
+				draw();
+			};
+			arrowSizeValueDiv.appendChild(arrowSizeRange);
+			arrowSizeDiv.appendChild(arrowSizeValueDiv);
+			container.appendChild(arrowSizeDiv);
+			
+			
+			//自己ループの表示角度の設定
+			let selfLoopAngleDiv=document.createElement('div');
+			selfLoopAngleDiv.id='selfLoopAngle';
+			if(!focusObject.arc||(focusObject.vertex1!=focusObject.vertex2)){
+				selfLoopAngleDiv.style.display='none';
+			}
+			let selfLoopAngleLabel=document.createElement('label');
+			selfLoopAngleLabel.textContent='表示角度　　：';
+			selfLoopAngleDiv.appendChild(selfLoopAngleLabel);
+			
+			let selfLoopAngleValue=document.createElement('div');
+			selfLoopAngleValue.style='display:inline-block;vertical-align:top;';
+			selfLoopAngleValue.id='selfLoopAngleValue';
+			let selfLoopAngleText=document.createElement('input');
+			selfLoopAngleText.type='text';
+			selfLoopAngleText.id='selfLoopAngleText';
+			selfLoopAngleText.size=14;
+			selfLoopAngleText.value=focusObject.selfLoopAngle;
+			selfLoopAngleText.onchange=function(){
+				let a=parseFloat(selfLoopAngleText.value);
+				if(!isNaN(a)){
+					if(a<=1)a=0;
+					if(a>=360)a=360;
+					selfLoopAngleText.value=a;
+					focusObject.selfLoopAngle=a;
+					document.getElementById('selfLoopAngleRange').value=a;
+					draw();
+				}
+			}
+			selfLoopAngleValue.appendChild(selfLoopAngleText);
+			selfLoopAngleValue.appendChild(document.createElement('br'));
+			
+			let selfLoopAngleRange=document.createElement('input');
+			selfLoopAngleRange.type='range';
+			selfLoopAngleRange.id='selfLoopAngleRange';
+			selfLoopAngleRange.min=0;
+			selfLoopAngleRange.max=360;
+			selfLoopAngleRange.value=focusObject.selfLoopAngle;
+			selfLoopAngleRange.onchange=function(){
+				let w=parseFloat(selfLoopAngleRange.value);
+				focusObject.selfLoopAngle=w;
+				document.getElementById('selfLoopAngleText').value=w;
+				draw();
+			};
+			selfLoopAngleValue.appendChild(selfLoopAngleRange);
+			selfLoopAngleDiv.appendChild(selfLoopAngleValue);
+			container.appendChild(selfLoopAngleDiv);
 			
 			
 			//辺の削除ボタン
@@ -700,6 +909,9 @@
 				edges=edges.filter(function(edge){
 					return edge!=focusObject;
 				});
+				for(let i=0;i<edges.length;i++){
+					edges[i].id=i;
+				}
 				setFocusObject(null);
 				draw();
 			};
@@ -743,9 +955,10 @@
 		}
 		
 		if(clickMode=='addVertex'){
-			setFocusObject(new Vertex(Math.floor(mouseX),Math.floor(mouseY),5));
+			setFocusObject(new Vertex(Math.floor(mouseX),Math.floor(mouseY),vertices.length));
 			vertices.push(focusObject);
 			draw();
+			return;
 		}
 		
 		setFocusObject(null);
@@ -769,7 +982,7 @@
 		}
 		if(selectedVertex!=null){
 			draw();
-			new Edge(selectedVertex,new Vertex(mouseX,mouseY,0)).draw();
+			new Edge(selectedVertex,new Vertex(mouseX,mouseY,0),0).draw();
 		}
 	});
 	
@@ -782,7 +995,7 @@
 			let mouseY=e.clientY-rect.top;
 			for(let i=0;i<vertices.length;i++){
 				if(vertices[i].isPointOverlapping(mouseX,mouseY)){
-					setFocusObject(new Edge(selectedVertex,vertices[i],100));
+					setFocusObject(new Edge(selectedVertex,vertices[i],edges.length));
 					edges.push(focusObject);
 					break;
 				}
