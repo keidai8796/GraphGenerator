@@ -33,7 +33,76 @@
 				</select>
 				<br><br>
 			</div>
-			<div id="object-settings"></div>
+			<div id="object-settings">
+				<div id="vertex-settings" style="display:none;">
+					<h4 id="vertexName"></h4>
+					<div id="coordinate">
+						頂点の座標：x=
+						<input type="text" id="coordinateXText" size="1" onchange="coordinateXTextChanged(this.value)">
+						, y=
+						<input type="text" id="coordinateYText" size="1" onchange="coordinateYTextChanged(this.value)">
+					</div>
+					<div id="vertexRadius">
+						頂点の半径：
+						<input type="text" id="vertexRadiusText" size="14" onchange="vertexRadiusTextChanged(this.value)">
+					</div>
+					<div id="borderColor">
+						枠線の色：
+						<input type="color" id="borderColorPicker" onchange="borderColorChanged(this.value)">
+					</div>
+					<div id="borderWidth">
+						枠線の幅：
+						<input type="text" id="borderWidthText" size="14" onchange="borderWidthTextChanged(this.value)">
+					</div>
+					<div id="fill">
+						塗りつぶし：
+						<input type="checkbox" id="fillCheckbox" onchange="fillCheckboxChenged(this.checked)">
+					</div>
+					<div id="fillColor">
+						塗りつぶし色：
+						<input type="color" id="fillColorPicker" onchange="fillColorChanged(this.value)">
+					</div>
+					<input type="button" id="deleteVertex" value="削除" onclick="vertexDeleteButtonClicked()">
+				</div>
+				<div id="edge-settings" style="display:none;">
+					<h4 id="edgeName"></h4>
+					<div id="edgeColor">
+						辺の色：
+						<input type="color" id="edgeColorPicker" onchange="edgeColorChanged(this.value)">
+					</div>
+					<div id="edgeWidth">
+						辺の幅：
+						<input type="text" id="edgeWidthText" onchange="edgeWidthTextChanged(this.value)">
+					</div>
+					<div id="arc">
+						円弧状にする：
+						<input type="checkbox" id="arcCheckbox" onchange="arcCheckboxChanged(this.checked)">
+					</div>
+					<div id="arcRadius">
+						弧の半径：
+						<input type="text" id="arcRadiusText" onchange="arcRadiusTextChanged(this.value)">
+					</div>
+					<div id="largeArc">
+						弧を大きく：
+						<input type="checkbox" id="largeArcCheckbox" onchange="largeArcCheckboxChanged(this.checked)">
+					</div>
+					<div id="arrow">
+						矢印の有無：始点
+						<input type="checkbox" id="startArrowCheckbox" onchange="startArrowCheckboxChanged(this.checked)">
+						終点
+						<input type="checkbox" id="endArrowCheckbox" onchange="endArrowCheckboxChanged(this.checked)">
+					</div>
+					<div id="arrowSize">
+						矢印の大きさ:
+						<input type="text" id="arrowSizeText" onchange="arrowSizeTextChanged(this.value)">
+					</div>
+					<div id="selfLoopAngle">
+						表示角度：
+						<input type="text" id="selfLoopAngleText" onchange="selfLoopAngleTextChanged(this.value)">
+					</div>
+					<input type="button" id="deleteEdge" value="削除" onclick="edgeDeleteButtonClicked()">
+				</div>
+			</div>
 		</div>
 	</div>
 	
@@ -49,8 +118,8 @@
 			this.y=y;
 			this.radius=5;
 			this.id=id;
-			this.fillColor='black';
-			this.borderColor='black';
+			this.fillColor='#000000';
+			this.borderColor='#000000';
 			this.borderWidth=1;
 			this.fill=false;
 			this.edges=[];
@@ -88,7 +157,7 @@
 			this.vertex2=vertex2;
 			this.radius=100;
 			this.id=id;
-			this.color='black';
+			this.color='#000000';
 			this.arc=false;
 			this.width=1;
 			this.largeArc=false;
@@ -349,7 +418,7 @@
 			this.size=10;
 			this.name=name;
 			this.parentObject=parentObject;
-			this.color='black';
+			this.color='#000000';
 		}
 		
 		//ラベルが座標(x,y)に最も近づくように更新
@@ -514,560 +583,262 @@
 		}
 	}
 	
+	focusObject=vertices[0];
+	function coordinateXTextChanged(text){
+		let coordinateXText=document.getElementById('coordinateXText');
+		let x=parseFloat(text);
+		if(!isNaN(x)){
+			if(x<=0)x=0;
+			if(x>=600)x=600;
+			coordinateXText.value=x;
+			focusObject.x=x;
+			draw();
+		}
+	}
+	
+	function coordinateYTextChanged(text){
+		let coordinateXText=document.getElementById('coordinateYText');
+		let y=parseFloat(text);
+		if(!isNaN(y)){
+			if(y<=0)y=0;
+			if(y>=600)y=600;
+			coordinateYText.value=y;
+			focusObject.y=y;
+			draw();
+		}
+	}
+	
+	function vertexRadiusTextChanged(text){
+		let vertexRadiusText=document.getElementById('vertexRadiusText');
+		let r=parseFloat(text)
+		if(!isNaN(r)){
+			if(r<3)r=3;
+			if(r>100)r=100;
+			vertexRadiusText.value=r;
+			focusObject.radius=r;
+			draw();
+		}
+	}
+	
+	function borderColorChanged(color){
+		focusObject.borderColor=color;
+		draw();
+	}
+	
+	function borderWidthTextChanged(text){
+		let borderWidthText=document.getElementById('borderWidthText');
+		let w=parseFloat(text);
+		if(!isNaN(w)){
+			if(w<1)w=1;
+			if(w>10)w=10;
+			borderWidthText.value=w;
+			focusObject.borderWidth=w;
+			draw();
+		}
+	}
+	
+	function fillCheckboxChenged(checked){
+		focusObject.fill=checked;
+		let fillColor=document.getElementById('fillColor');
+		if(focusObject.fill){
+			fillColor.style.display='block';
+		}else{
+			fillColor.style.display='none';
+		}
+		draw();
+	}
+	
+	function vertexDeleteButtonClicked(){
+		deleteVertex(focusObject);
+		setFocusObject(null);
+		draw();
+	}
+	
+	function edgeColorChanged(color){
+		focusObject.color=color;
+		draw();
+	}
+	
+	function edgeWidthTextChanged(text){
+		let edgeWidthText=document.getElementById('edgeWidthText');
+		let w=parseFloat(text);
+		if(!isNaN(w)){
+			if(w<1)w=1;
+			if(w>10)w=10;
+			edgeWidthText.value=w;
+			focusObject.width=w;
+			draw();
+		}
+	}
+	
+	function arcCheckboxChanged(checked){
+		focusObject.arc=checked;
+		let arcRadius=document.getElementById('arcRadius');
+		let largeArc=document.getElementById('largeArc');
+		if(checked){
+			arcRadius.style.display='block';
+			largeArc.style.display='block';
+		}else{
+			arcRadius.style.display='none';
+			largeArc.style.display='none';
+		}
+		draw();
+	}
+	
+	function arcRadiusTextChanged(text){
+		let arcRadiusText=document.getElementById('arcRadiusText');
+		let r=parseFloat(text)
+		if(!isNaN(r)){
+			focusObject.radius=r;
+			draw();
+		}
+	}
+	
+	function largeArcCheckboxChanged(checked){
+		focusObject.largeArc=checked;
+		draw();
+	}
+	
+	function startArrowCheckboxChanged(checked){
+		focusObject.startArrow=checked;
+		draw();
+	}
+	
+	function endArrowCheckboxChanged(checked){
+		focusObject.endArrow=checked;
+		draw();
+	}
+	
+	function arrowSizeTextChanged(text){
+		let arrowSizeText=document.getElementById('arrowSizeText');
+		let s=parseFloat(text)
+		if(!isNaN(s)){
+			if(s<1)s=1;
+			focusObject.arrowSize=s;
+			draw();
+		}
+	}
+	
+	function selfLoopAngleTextChanged(text){
+		let selfLoopAngleText=document.getElementById('selfLoopAngleText');
+		let a=parseFloat(text);
+		if(!isNaN(a)){
+			focusObject.selfLoopAngle=a;
+			draw();
+		}
+	}
+	
+	function edgeDeleteButtonClicked(){
+		deleteEdge(focusObject);
+		setFocusObject(null);
+		draw();
+	}
+	
 	//フォーカスするオブジェクトを設定する
 	function setFocusObject(object){
 		focusObject=object;
-		let container=document.getElementById("object-settings");
-		container.innerHTML='';
-		
+		let vertexSettings=document.getElementById('vertex-settings');
+		let edgeSettings=document.getElementById('edge-settings');
+		vertexSettings.style.display='none';
+		edgeSettings.style.display='none';
 		//フォーカスしているオブジェクトによって表示内容を変える
 		if(object instanceof Vertex){
-			let vertexName=document.createElement('h4');
-			vertexName.id='vertexName';
-			let vertexNameLabel=document.createElement('label');
-			vertexNameLabel.textContent='頂点'+focusObject.id;
-			vertexName.appendChild(vertexNameLabel);
-			container.appendChild(vertexName);
+			vertexSettings.style.display='block';
+			//頂点名
+			let vertexName=document.getElementById('vertexName');
+			vertexName.textContent='頂点'+focusObject.id;
 			
 			//座標の表示
-			let coordinateDiv=document.createElement('div');
-			coordinateDiv.id='coordinate'
-			let coordinateLabel=document.createElement('label');
-			coordinateLabel.textContent='頂点の座標　：';
-			coordinateDiv.appendChild(coordinateLabel);
-			
-			let coordinateXLabel=document.createElement('label')
-			coordinateXLabel.textContent='x=';
-			coordinateDiv.appendChild(coordinateXLabel);
-			
-			let coordinateXText=document.createElement('input');
-			coordinateXText.type='text';
-			coordinateXText.id='coordinateX';
-			coordinateXText.value=focusObject.x;
-			coordinateXText.size=1;
-			coordinateXText.onchange=function(){
-				let x=parseFloat(coordinateXText.value);
-				if(!isNaN(x)){
-					if(x<=0)x=0;
-					if(x>=600)x=600;
-					coordinateXText.value=x;
-					focusObject.x=x;
-					draw();
-				}
-			}
-			coordinateDiv.appendChild(coordinateXText);
-			
-			let coordinateYLabel=document.createElement('label');
-			coordinateYLabel.textContent=', y=';
-			coordinateDiv.appendChild(coordinateYLabel);
-			
-			let coordinateYText=document.createElement('input');
-			coordinateYText.type='text';
-			coordinateYText.id='coordinateY';
+			let coordinateXText=document.getElementById('coordinateXText');
+			coordinateXText.value=focusObject.x;	
+			let coordinateYText=document.getElementById('coordinateYText');
 			coordinateYText.value=focusObject.y;
-			coordinateYText.size=1;
-			coordinateYText.onchange=function(){
-				let y=parseFloat(coordinateYText.value);
-				if(!isNaN(y)){
-					if(y<=0)y=0;
-					if(y>=600)y=600;
-					coordinateYText.value=y;
-					focusObject.y=y;
-					draw();
-				}
-			}
-			coordinateDiv.appendChild(coordinateYText);
-			container.appendChild(coordinateDiv);
 			
 			//頂点の半径の設定
-			let radiusDiv=document.createElement('div');
-			radiusDiv.id='radius';
-			let radiusLabel=document.createElement('label');
-			radiusLabel.textContent='頂点の半径　：';
-			radiusDiv.appendChild(radiusLabel);
-			
-			let radiusValueDiv=document.createElement('div');
-			radiusValueDiv.style='display:inline-block;vertical-align:top;';
-			radiusValueDiv.id='radiusValue';
-			let radiusText=document.createElement('input');
-			radiusText.type='text';
-			radiusText.id='radiusText';
-			radiusText.size=14;
-			radiusText.value=focusObject.radius;
-			radiusText.onchange=function(){
-				let r=parseFloat(radiusText.value);
-				if(!isNaN(r)){
-					if(r<=3)r=3;
-					if(r>=50)r=50;
-					radiusText.value=r;
-					focusObject.radius=r;
-					document.getElementById('radiusRange').value=r;
-					draw();
-				}
-			}
-			radiusValueDiv.appendChild(radiusText);
-			radiusValueDiv.appendChild(document.createElement('br'));
-			
-			let radiusRange=document.createElement('input');
-			radiusRange.type='range';
-			radiusRange.id='radiusRange';
-			radiusRange.min=3;
-			radiusRange.max=50;
-			radiusRange.value=focusObject.radius;
-			radiusRange.onchange=function(){
-				let r=parseFloat(radiusRange.value);
-				focusObject.radius=r;
-				document.getElementById('radiusText').value=r;
-				draw();
-			};
-			radiusValueDiv.appendChild(radiusRange);
-			radiusDiv.appendChild(radiusValueDiv);
-			container.appendChild(radiusDiv);
-			
+			let vertexRadiusText=document.getElementById('vertexRadiusText');
+			vertexRadiusText.value=focusObject.radius;
 			
 			//枠線の色の設定
-			let borderColorDiv=document.createElement('div');
-			borderColorDiv.id='borderColor';
-			let borderColorLabel=document.createElement('label');
-			borderColorLabel.textContent='枠線の色　　：';
-			borderColorDiv.appendChild(borderColorLabel);
-			
-			let borderColorPicker=document.createElement('input');
-			borderColorPicker.type='color';
-			borderColorPicker.id='borderColorPicker';
+			let borderColorPicker=document.getElementById('borderColorPicker');
 			borderColorPicker.value=focusObject.borderColor;
-			borderColorPicker.onchange=function(){
-				focusObject.borderColor=borderColorPicker.value;
-				draw();
-			};
-			borderColorDiv.appendChild(borderColorPicker);
-			container.appendChild(borderColorDiv);
-			
 			
 			//枠線の幅の設定
-			let borderWidthDiv=document.createElement('div');
-			borderWidthDiv.id='borderWidth';
-			let borderWidthLabel=document.createElement('label');
-			borderWidthLabel.textContent='枠線の幅　　：';
-			borderWidthDiv.appendChild(borderWidthLabel);
-			
-			let borderWidthValueDiv=document.createElement('div');
-			borderWidthValueDiv.style='display:inline-block;vertical-align:top;';
-			borderWidthValueDiv.id='borderWidthValue';
-			let borderWidthText=document.createElement('input');
-			borderWidthText.type='text';
-			borderWidthText.id='borderWidthText';
-			borderWidthText.size=14;
+			let borderWidthText=document.getElementById('borderWidthText');
 			borderWidthText.value=focusObject.borderWidth;
-			borderWidthText.onchange=function(){
-				let w=parseFloat(borderWidthText.value);
-				if(!isNaN(w)){
-					if(w<=1)w=1;
-					if(w>=10)w=10;
-					borderWidthText.value=w;
-					focusObject.borderWidth=w;
-					document.getElementById('borderWidthRange').value=w;
-					draw();
-				}
-			}
-			borderWidthValueDiv.appendChild(borderWidthText);
-			borderWidthValueDiv.appendChild(document.createElement('br'));
-			
-			let borderWidthRange=document.createElement('input');
-			borderWidthRange.type='range';
-			borderWidthRange.id='borderWidthRange';
-			borderWidthRange.min=1;
-			borderWidthRange.max=10;
-			borderWidthRange.value=focusObject.borderWidth;
-			borderWidthRange.onchange=function(){
-				let w=parseFloat(borderWidthRange.value);
-				focusObject.borderWidth=w;
-				document.getElementById('borderWidthText').value=w;
-				draw();
-			};
-			borderWidthValueDiv.appendChild(borderWidthRange);
-			borderWidthDiv.appendChild(borderWidthValueDiv);
-			container.appendChild(borderWidthDiv);
-			
 			
 			//頂点の塗りつぶし設定
-			let fillDiv=document.createElement('div');
-			fillDiv.id='fill';
-			let fillLabel=document.createElement('label');
-			fillLabel.textContent='塗りつぶし　：';
-			fillDiv.appendChild(fillLabel);
-			
-			let fillCheckbox=document.createElement('input');
-			fillCheckbox.type='checkbox';
-			fillCheckbox.id='fillCheckbox';
+			let fillCheckbox=document.getElementById('fillCheckbox');
 			fillCheckbox.checked=focusObject.fill;
-			fillCheckbox.onclick=function(){
-				focusObject.fill=fillCheckbox.checked;
-				let fillColor=document.getElementById('fillColor');
-				if(focusObject.fill){
-					fillColor.style.display='block';
-				}else{
-					fillColor.style.display='none';
-				}
-				draw();
-			};
-			fillDiv.appendChild(fillCheckbox);
-			container.appendChild(fillDiv);
-			
 			
 			//塗りつぶし色の設定
-			let fillColorDiv=document.createElement('div');
-			fillColorDiv.id='fillColor';
-			if(!focusObject.fill){
-				fillColorDiv.style.display='none';
+			let fillColor=document.getElementById('fillColor');
+			if(focusObject.fill){
+				fillColor.style.display='block';
+			}else{
+				fillColor.style.display='none';
 			}
-			let fillColorLabel=document.createElement('label');
-			fillColorLabel.textContent='塗りつぶし色：';
-			fillColorDiv.appendChild(fillColorLabel);
-			
-			let fillColorPicker=document.createElement('input');
-			fillColorPicker.type='color';
-			fillColorPicker.id='fillColorPicker';
+			let fillColorPicker=document.getElementById('fillColorPicker');
 			fillColorPicker.value=focusObject.fillColor;
-			fillColorPicker.onchange=function(){
-				focusObject.fillColor=fillColorPicker.value;
-				draw();
-			};
-			fillColorDiv.appendChild(fillColorPicker);
-			container.appendChild(fillColorDiv);
-			
-			
-			//頂点の削除ボタン
-			let deleteButton=document.createElement('input');
-			deleteButton.type='button';
-			deleteButton.id='deleteVertex';
-			deleteButton.value='削除';
-			deleteButton.onclick=function(){
-				deleteVertex(focusObject);
-				setFocusObject(null);
-				draw();
-			};
-			container.appendChild(deleteButton);
 		}
 		
 		if(object instanceof Edge){
-			let edgeName=document.createElement('h4');
-			edgeName.id='edgeName';
-			let edgeNameLabel=document.createElement('label');
-			edgeNameLabel.textContent='辺'+focusObject.id;
-			edgeName.appendChild(edgeNameLabel);
-			container.appendChild(edgeName);
+			edgeSettings.style.display='block';
+			//辺名
+			let edgeName=document.getElementById('edgeName');
+			edgeName,value='辺'+focusObject.id;
 			
 			//辺の色の設定
-			let edgeColorDiv=document.createElement('div');
-			edgeColorDiv.id='edgeColor';
-			let edgeColorLabel=document.createElement('label');
-			edgeColorLabel.textContent='辺の色　　　：';
-			edgeColorDiv.appendChild(edgeColorLabel);
-			
-			let edgeColorPicker=document.createElement('input');
-			edgeColorPicker.type='color';
-			edgeColorPicker.id='edgeColorPicker';
+			let edgeColorPicker=document.getElementById('edgeColorPicker');
 			edgeColorPicker.value=focusObject.color;
-			edgeColorPicker.onchange=function(){
-				focusObject.color=edgeColorPicker.value;
-				draw();
-			};
-			edgeColorDiv.appendChild(edgeColorPicker);
-			container.appendChild(edgeColorDiv);
-			
 			
 			//辺の幅の設定
-			let edgeWidthDiv=document.createElement('div');
-			edgeWidthDiv.id='edgeWidth';
-			let edgeWidthLabel=document.createElement('label');
-			edgeWidthLabel.textContent='辺の幅　　　：';
-			edgeWidthDiv.appendChild(edgeWidthLabel);
-			
-			let edgeWidthValueDiv=document.createElement('div');
-			edgeWidthValueDiv.style='display:inline-block;vertical-align:top;';
-			edgeWidthValueDiv.id='edgeWidthValue';
-			let edgeWidthText=document.createElement('input');
-			edgeWidthText.type='text';
-			edgeWidthText.id='edgeWidthText';
-			edgeWidthText.size=14;
+			let edgeWidthText=document.getElementById('edgeWidthText');
 			edgeWidthText.value=focusObject.width;
-			edgeWidthText.onchange=function(){
-				let w=parseFloat(edgeWidthText.value);
-				if(!isNaN(w)){
-					if(w<=1)w=1;
-					if(w>=10)w=10;
-					edgeWidthWidthText.value=w;
-					focusObject.width=w;
-					document.getElementById('edgeWidthRange').value=w;
-					draw();
-				}
-			}
-			edgeWidthValueDiv.appendChild(edgeWidthText);
-			edgeWidthValueDiv.appendChild(document.createElement('br'));
-			
-			let edgeWidthRange=document.createElement('input');
-			edgeWidthRange.type='range';
-			edgeWidthRange.id='edgeWidthRange';
-			edgeWidthRange.min=1;
-			edgeWidthRange.max=10;
-			edgeWidthRange.value=focusObject.width;
-			edgeWidthRange.onchange=function(){
-				let w=parseFloat(edgeWidthRange.value);
-				focusObject.width=w;
-				document.getElementById('edgeWidthText').value=w;
-				draw();
-			};
-			edgeWidthValueDiv.appendChild(edgeWidthRange);
-			edgeWidthDiv.appendChild(edgeWidthValueDiv);
-			container.appendChild(edgeWidthDiv);
-			
 			
 			//辺を円弧状にする設定
-			let arcDiv=document.createElement('div');
-			arcDiv.id='arc';
-			if(focusObject.vertex1==focusObject.vertex2){
-				arcDiv.style.display='none';
-			}
-			let arcLabel=document.createElement('label');
-			arcLabel.textContent='円弧状に表示：';
-			arcDiv.appendChild(arcLabel);
-			
-			let arcCheckbox=document.createElement('input');
-			arcCheckbox.type='checkbox';
-			arcCheckbox.id='arcCheckbox';
+			let arcCheckbox=document.createElement('arcCheckbox');
 			arcCheckbox.checked=focusObject.arc;
-			arcCheckbox.onclick=function(){
-				focusObject.arc=arcCheckbox.checked;
-				let radius=document.getElementById('radius');
-				let largeArc=document.getElementById('largeArc');
-				if(focusObject.arc){
-					radius.style.display='block';
-					largeArc.style.display='block';
-				}else{
-					radius.style.display='none';
-					largeArc.style.display='none';
-				}
-				draw();
-			};
-			arcDiv.appendChild(arcCheckbox);
-			container.appendChild(arcDiv);
-			
 			
 			//弧の半径の設定
-			let radiusDiv=document.createElement('div');
-			radiusDiv.id='radius';
-			if(!focusObject.arc){
-				radiusDiv.style.display='none';
+			let arcRadius=document.getElementById('arcRadius');
+			if(focusObject.arc){
+				arcRadius.style.display='block';
+			}else{
+				arcRadius.style.display='none';
 			}
-			let radiusLabel=document.createElement('label');
-			radiusLabel.textContent='弧の半径　　：';
-			radiusDiv.appendChild(radiusLabel);
-			
-			let radiusValueDiv=document.createElement('div');
-			radiusValueDiv.style='display:inline-block; vertical-align:top;';
-			radiusValueDiv.id='radiusValue';
-			let radiusText=document.createElement('input');
-			radiusText.type='text';
-			radiusText.id='radiusText';
-			radiusText.size=14;
-			radiusText.value=focusObject.radius;
-			radiusText.onchange=function(){
-				let r=parseFloat(radiusText.value);
-				if(!isNaN(r)){
-					if(r<=-1000)r=-1000;
-					if(r>=1000)r=1000;
-					radiusText.value=r;
-					focusObject.radius=r;
-					document.getElementById('radiusRange').value=r;
-					draw();
-				}
-			}
-			radiusValueDiv.appendChild(radiusText);
-			radiusValueDiv.appendChild(document.createElement('br'));
-			
-			let radiusRange=document.createElement('input');
-			radiusRange.type='range';
-			radiusRange.id='radiusRange';
-			radiusRange.min=-1000;
-			radiusRange.max=1000;
-			radiusRange.value=focusObject.radius;
-			radiusRange.onchange=function(){
-				let r=parseFloat(radiusRange.value);
-				focusObject.radius=r;
-				document.getElementById('radiusText').value=r;
-				draw();
-			};
-			radiusValueDiv.appendChild(radiusRange);
-			radiusDiv.appendChild(radiusValueDiv);
-			container.appendChild(radiusDiv);
-			
+			let arcRadiusText=document.getElementById('arcRadiusText');		
+			arcRadiusText.value=focusObject.radius;
 			
 			//弧を大きくする設定
-			let largeArcDiv=document.createElement('div');
-			largeArcDiv.id='largeArc';
-			if(!focusObject.arc||(focusObject.vertex1==focusObject.vertex2)){
-				largeArcDiv.style.display='none';
+			let largeArc=document.getElementById('largeArc');
+			if(focusObject.arc){
+				largeArc.style.display='block';
+			}else{
+				largeArc.style.display='none';
 			}
-			let largeArcLabel=document.createElement('label');
-			largeArcLabel.textContent='弧を大きく　：';
-			largeArcDiv.appendChild(largeArcLabel);
-			
-			let largeArcCheckbox=document.createElement('input');
-			largeArcCheckbox.type='checkbox';
-			largeArcCheckbox.id='largeArcCheckbox';
+			let largeArcCheckbox=document.getElementById('largeArcCheckbox');
 			largeArcCheckbox.checked=focusObject.largeArc;
-			largeArcCheckbox.onclick=function(){
-				focusObject.largeArc=largeArcCheckbox.checked;
-				draw();
-			};
-			largeArcDiv.appendChild(largeArcCheckbox);
-			container.appendChild(largeArcDiv);
-			
 			
 			//矢印の表示の有無
-			let arrowDiv=document.createElement('div');
-			arrowDiv.id='coordinate'
-			let arrowLabel=document.createElement('label');
-			arrowLabel.textContent='矢印の有無　：';
-			arrowDiv.appendChild(arrowLabel);
-			
-			let startArrorLabel=document.createElement('label')
-			startArrorLabel.textContent='始点';
-			arrowDiv.appendChild(startArrorLabel);
-			
-			let startArrorCheckbox=document.createElement('input');
-			startArrorCheckbox.type='checkbox';
-			startArrorCheckbox.id='startArrow';
+			let startArrorCheckbox=document.getElementById('startArrowCheckbox');
 			startArrorCheckbox.value=focusObject.startArrow;
-			startArrorCheckbox.onchange=function(){
-				focusObject.startArrow=startArrorCheckbox.checked;
-				draw();
-			}
-			arrowDiv.appendChild(startArrorCheckbox);
 			
-			let endArrorLabel=document.createElement('label')
-			endArrorLabel.textContent=' 終点';
-			arrowDiv.appendChild(endArrorLabel);
-			
-			let endArrorCheckbox=document.createElement('input');
-			endArrorCheckbox.type='checkbox';
-			endArrorCheckbox.id='endArrow';
+			let endArrorCheckbox=document.getElementById('endArrowCheckbox');
 			endArrorCheckbox.value=focusObject.endArrow;
-			endArrorCheckbox.onchange=function(){
-				focusObject.endArrow=endArrorCheckbox.checked;
-				draw();
-			}
-			arrowDiv.appendChild(endArrorCheckbox);
-			container.appendChild(arrowDiv);
-			
 			
 			//矢印の大きさの設定
-			let arrowSizeDiv=document.createElement('div');
-			arrowSizeDiv.id='arrowSize';
-			let arrowSizeLabel=document.createElement('label');
-			arrowSizeLabel.textContent='矢印の大きさ：';
-			arrowSizeDiv.appendChild(arrowSizeLabel);
-			
-			let arrowSizeValueDiv=document.createElement('div');
-			arrowSizeValueDiv.style='display:inline-block;vertical-align:top;';
-			arrowSizeValueDiv.id='arrowSizeValue';
-			let arrowSizeText=document.createElement('input');
-			arrowSizeText.type='text';
-			arrowSizeText.id='arrowSizeText';
-			arrowSizeText.size=14;
+			let arrowSizeText=document.getElementById('arrowSizeText');
 			arrowSizeText.value=focusObject.arrowSize;
-			arrowSizeText.onchange=function(){
-				let s=parseFloat(arrowSizeText.value);
-				if(!isNaN(s)){
-					if(s<=1)s=1;
-					if(s>=30)s=30;
-					arrowSizeText.value=s;
-					focusObject.arrowSize=s;
-					document.getElementById('arrowSizeRange').value=s;
-					draw();
-				}
-			}
-			arrowSizeValueDiv.appendChild(arrowSizeText);
-			arrowSizeValueDiv.appendChild(document.createElement('br'));
-			
-			let arrowSizeRange=document.createElement('input');
-			arrowSizeRange.type='range';
-			arrowSizeRange.id='arrowSizeRange';
-			arrowSizeRange.min=1;
-			arrowSizeRange.max=30;
-			arrowSizeRange.value=focusObject.arrowSize;
-			arrowSizeRange.onchange=function(){
-				let s=parseFloat(arrowSizeRange.value);
-				focusObject.arrowSize=s;
-				document.getElementById('arrowSizeText').value=s;
-				draw();
-			};
-			arrowSizeValueDiv.appendChild(arrowSizeRange);
-			arrowSizeDiv.appendChild(arrowSizeValueDiv);
-			container.appendChild(arrowSizeDiv);
-			
 			
 			//自己ループの表示角度の設定
-			let selfLoopAngleDiv=document.createElement('div');
-			selfLoopAngleDiv.id='selfLoopAngle';
+			let selfLoopAngle=document.createElement('selfLoopAngle');
 			if(!focusObject.arc||(focusObject.vertex1!=focusObject.vertex2)){
-				selfLoopAngleDiv.style.display='none';
+				selfLoopAngle.style.display='none';
+			}else{
+				selfLoopAngle.style.display='block';
 			}
-			let selfLoopAngleLabel=document.createElement('label');
-			selfLoopAngleLabel.textContent='表示角度　　：';
-			selfLoopAngleDiv.appendChild(selfLoopAngleLabel);
-			
-			let selfLoopAngleValue=document.createElement('div');
-			selfLoopAngleValue.style='display:inline-block;vertical-align:top;';
-			selfLoopAngleValue.id='selfLoopAngleValue';
-			let selfLoopAngleText=document.createElement('input');
-			selfLoopAngleText.type='text';
-			selfLoopAngleText.id='selfLoopAngleText';
-			selfLoopAngleText.size=14;
+			let selfLoopAngleText=document.getElementById('selfLoopAngleText');
 			selfLoopAngleText.value=focusObject.selfLoopAngle;
-			selfLoopAngleText.onchange=function(){
-				let a=parseFloat(selfLoopAngleText.value);
-				if(!isNaN(a)){
-					if(a<=1)a=0;
-					if(a>=360)a=360;
-					selfLoopAngleText.value=a;
-					focusObject.selfLoopAngle=a;
-					document.getElementById('selfLoopAngleRange').value=a;
-					draw();
-				}
-			}
-			selfLoopAngleValue.appendChild(selfLoopAngleText);
-			selfLoopAngleValue.appendChild(document.createElement('br'));
-			
-			let selfLoopAngleRange=document.createElement('input');
-			selfLoopAngleRange.type='range';
-			selfLoopAngleRange.id='selfLoopAngleRange';
-			selfLoopAngleRange.min=0;
-			selfLoopAngleRange.max=360;
-			selfLoopAngleRange.value=focusObject.selfLoopAngle;
-			selfLoopAngleRange.onchange=function(){
-				let w=parseFloat(selfLoopAngleRange.value);
-				focusObject.selfLoopAngle=w;
-				document.getElementById('selfLoopAngleText').value=w;
-				draw();
-			};
-			selfLoopAngleValue.appendChild(selfLoopAngleRange);
-			selfLoopAngleDiv.appendChild(selfLoopAngleValue);
-			container.appendChild(selfLoopAngleDiv);
-			
-			
-			//辺の削除ボタン
-			let deleteButton=document.createElement('input');
-			deleteButton.type='button';
-			deleteButton.id='deleteEdge';
-			deleteButton.value='削除';
-			deleteButton.onclick=function(){
-				deleteEdge(focusObject);
-				setFocusObject(null);
-				draw();
-			};
-			container.appendChild(deleteButton);
 		}
 	}
 	
@@ -1108,7 +879,6 @@
 			if(labels[i].isPointOverlapping(mouseX,mouseY)){
 				draggedObject=labels[i];
 				setFocusObject(labels[i]);
-				console.log("ok");
 				return;
 			}
 		}
@@ -1132,8 +902,8 @@
 			draggedObject.x=mouseX-clickOffsetX;
 			draggedObject.y=mouseY-clickOffsetY;
 			if(focusObject==draggedObject){
-				let coordinateX=document.getElementById('coordinateX');
-				let coordinateY=document.getElementById('coordinateY');
+				let coordinateX=document.getElementById('coordinateXText');
+				let coordinateY=document.getElementById('coordinateYText');
 				coordinateX.value=draggedObject.x;
 				coordinateY.value=draggedObject.y;
 			}
@@ -1143,16 +913,12 @@
 			if(draggedObject.arc){
 				draggedObject.updateRadius(mouseX,mouseY);
 				if(focusObject==draggedObject){
-					let radiusText=document.getElementById('radiusText');
-					let radiusRange=document.getElementById('radiusRange');
+					let radiusText=document.getElementById('arcRadiusText');
 					let largeArc=document.getElementById('largeArcCheckbox');
 					let selfLoopAngleText=document.getElementById('selfLoopAngleText');
-					let selfLoopAngleRange=document.getElementById('selfLoopAngleRange');
 					radiusText.value=focusObject.radius;
-					radiusRange.value=focusObject.radius;
 					largeArc.checked=focusObject.largeArc;
 					selfLoopAngleText.value=focusObject.selfLoopAngle;
-					selfLoopAngleRange.value=focusObject.selfLoopAngle;
 				}
 				draw();
 			}
