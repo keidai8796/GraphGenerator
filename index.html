@@ -165,6 +165,7 @@
 			this.fill=false;
 			this.edges=[];
             this.focus=false;
+            this.lastFocusTime=0;
 		}
 		
 		//頂点を描画する関数
@@ -216,6 +217,7 @@
 			this.endArrow=false;
 			this.selfLoopAngle=0;
             this.focus=false;
+            this.lastFocusTime=0;
 			if(vertex1==vertex2){
 				this.arc=true;
 				this.radius=vertex1.radius*3;
@@ -486,12 +488,13 @@
 				this.distance=this.parentObject.radius+8;
 			}
 			if(this.parentObject instanceof Edge){
-				this.distance=8;
+				this.distance=this.parentObject.width+10;
 			}
 			this.size=12;
 			this.color='#000000';
 			this.italic=false;
             this.focus=false;
+            this.lastFocusTime=0;
 		}
 		
 		//ラベルが座標(x,y)に最も近づくように更新
@@ -918,7 +921,9 @@
         setFocusObject(newLabel);
         draw();
     }
-  
+    
+    let focusCount=0;
+    
 	//フォーカスするオブジェクトを設定する
 	function setFocusObject(object){
         if(focusObject!=null){
@@ -927,6 +932,7 @@
         focusObject=object;
         if(focusObject!=null){
             focusObject.focus=true;
+            focusObject.lastFocusTime=focusCount++;
         }
         let vertexSettings=document.getElementById('vertex-settings');
         let edgeSettings=document.getElementById('edge-settings');
@@ -1105,41 +1111,51 @@
 		const rect=canvas.getBoundingClientRect();
 		let mouseX=e.clientX-rect.left;
 		let mouseY=e.clientY-rect.top;
-		
+        let clickedObjects=[];
 		//頂点がクリックされたかを判定
 		for(let i=0;i<vertices.length;i++){
 			if(vertices[i].isPointOverlapping(mouseX,mouseY)){
-				if(clickMode=="moveVertex"||clickMode=="addVertex"){
-					draggedObject=vertices[i];
-					clickOffsetX=mouseX-vertices[i].x;
-					clickOffsetY=mouseY-vertices[i].y;
-				}
-				if(clickMode=="addEdge"){
-					addEdgeSelectedVertex=vertices[i];
-				}
-				setFocusObject(vertices[i]);
-				return;
+                clickedObjects.push(vertices[i]);
 			}
 		}
 		
 		//辺がクリックされたかを判定
 		for(let i=0;i<edges.length;i++){
 			if(edges[i].isPointOverlapping(mouseX,mouseY)){
-				draggedObject=edges[i];
-				setFocusObject(edges[i]);
-				return;
+                clickedObjects.push(edges[i]);
 			}
 		}
 		
 		//ラベルがクリックされたかを判定
 		for(let i=0;i<labels.length;i++){
 			if(labels[i].isPointOverlapping(mouseX,mouseY)){
-				draggedObject=labels[i];
-				setFocusObject(labels[i]);
-				return;
+                clickedObjects.push(labels[i]);
 			}
 		}
 		
+        if(clickedObjects.length!=0){
+            let minObject=clickedObjects[0];
+            for(let i=0;i<clickedObjects.length;i++){
+                if(minObject.lastFocusTime>clickedObjects[i].lastFocusTime){
+                    minObject=clickedObjects[i];
+                }
+            }
+            if(minObject instanceof Vertex){
+                if(clickMode=="moveVertex"||clickMode=="addVertex"){
+					draggedObject=minObject;
+					clickOffsetX=mouseX-minObject.x;
+					clickOffsetY=mouseY-minObject.y;
+				}
+				if(clickMode=="addEdge"){
+					addEdgeSelectedVertex=minObject;
+				}
+            }else{
+                draggedObject=minObject;
+            }
+            setFocusObject(minObject);
+            return;
+        }
+        
 		if(clickMode=='addVertex'){
 			setFocusObject(new Vertex(Math.floor(mouseX),Math.floor(mouseY),vertices.length));
 			vertices.push(focusObject);
