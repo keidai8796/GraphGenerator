@@ -164,10 +164,19 @@
 			this.borderWidth=1;
 			this.fill=false;
 			this.edges=[];
+            this.focus=false;
 		}
 		
 		//頂点を描画する関数
 		draw(){
+            if(this.focus){
+                ctx.beginPath();
+                ctx.arc(this.x,this.y,Math.abs(this.radius+this.borderWidth/2+1),0,2*Math.PI);
+                ctx.strokeStyle='#AAAAFF';
+                ctx.lineWidth=2;
+                ctx.stroke();
+            }
+            
 			if(this.fill){
 				ctx.beginPath();
 				ctx.arc(this.x,this.y,Math.abs(this.radius),0,2*Math.PI);
@@ -206,6 +215,7 @@
 			this.startArrow=false;
 			this.endArrow=false;
 			this.selfLoopAngle=0;
+            this.focus=false;
 			if(vertex1==vertex2){
 				this.arc=true;
 				this.radius=vertex1.radius*3;
@@ -221,7 +231,6 @@
 			let y1=this.vertex1.y+Math.sin(theta)*(this.vertex1.radius+this.vertex1.borderWidth/2);
 			let x2=this.vertex2.x-Math.cos(theta)*(this.vertex2.radius+this.vertex2.borderWidth/2);
 			let y2=this.vertex2.y-Math.sin(theta)*(this.vertex2.radius+this.vertex2.borderWidth/2);
-      console.log(this.vertex2.radius+this.vertex2.borderWidth);
 			return {x1:x1,y1:y1,x2:x2,y2:y2};
 		}
 		
@@ -363,6 +372,14 @@
 			if(!this.arc){
 				//直線の描画
 				let line=this.calcLine();
+                if(this.focus){
+                    ctx.beginPath();
+				    ctx.moveTo(line.x1,line.y1);
+				    ctx.lineTo(line.x2,line.y2);
+				    ctx.strokeStyle='#AAAAFF';
+				    ctx.lineWidth=this.width+4;
+				    ctx.stroke();
+                }
 				ctx.beginPath();
 				ctx.moveTo(line.x1,line.y1);
 				ctx.lineTo(line.x2,line.y2);
@@ -380,6 +397,13 @@
 			if(this.arc){
 				//弧の描画
 				let arc=this.calcArc();
+                if(this.focus){
+                    ctx.beginPath();
+				    ctx.arc(arc.cx,arc.cy,arc.r,arc.theta1,arc.theta2);
+				    ctx.strokeStyle='#AAAAFF';
+				    ctx.lineWidth=this.width+4;
+				    ctx.stroke();
+                }
 				ctx.beginPath();
 				ctx.arc(arc.cx,arc.cy,arc.r,arc.theta1,arc.theta2);
 				ctx.strokeStyle=this.color;
@@ -455,7 +479,7 @@
 		constructor(name,parentObject,id){
 			this.name=name;
 			this.parentObject=parentObject;
-      this.id=id;
+            this.id=id;
 			this.angle=0;
 			this.position=0.5;
 			if(this.parentObject instanceof Vertex){
@@ -467,6 +491,7 @@
 			this.size=12;
 			this.color='#000000';
 			this.italic=false;
+            this.focus=false;
 		}
 		
 		//ラベルが座標(x,y)に最も近づくように更新
@@ -549,31 +574,93 @@
 				}
 			}
 		}
-		
+        
+        //上付き文字と下付き文字に対応させる
+        constructNameStrings(subName,x,y,size,nameStrings){
+            let width=0;
+            for(let i=0;i<subName.length;i++){
+                if(subName[i]=='_'||subName[i]=='^'){
+                    if(i+1==subName.length){
+                        break;
+                    }
+                    if(subName[i+1]!='{'){
+                        if(subName[i]=='_'){
+                            width+=this.constructNameStrings(subName[i+1],x+width,y+size/4,size/5*4,nameStrings);
+                        }else{
+                            width+=this.constructNameStrings(subName[i+1],x+width,y-size/4,size/5*4,nameStrings);
+                        }
+                        i++;
+                    }else{
+                        let depth=1;
+                        for(let j=i+2;j<subName.length;j++){
+                            if(subName[j]=='{'){
+                                depth++;
+                            }
+                            if(subName[j]=='}'){
+                                depth--;
+                                if(depth==0){
+                                    if(subName[i]=='_'){
+                                        width+=this.constructNameStrings(subName.substr(i+2,j-i-2),x+width,y+size/4,size/5*4,nameStrings);
+                                    }else{
+                                        width+=this.constructNameStrings(subName.substr(i+2,j-i-2),x+width,y-size/4,size/5*4,nameStrings);
+                                    }
+                                    i=j;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    continue;
+                }
+                nameStrings.push({size:size,str:subName[i],x:x+width,y:y});
+                ctx.font=`${size}px Tex Gyre Termes` ;
+                width+=ctx.measureText(subName[i]).width;
+            }
+            return width;
+        }
+        
 		draw(){
 			let pos=this.calcPoisition();
 			ctx.strokeStyle=this.color;
-      ctx.lineWidth=1;
-			//ctx.font=`${this.size}px Arial`;
-      ctx.font=`${this.size}px TeX Gyre Termes`;
-			if(this.italic){
-				ctx.font='italic '+ctx.font;
+            ctx.lineWidth=1;
+            let nameStrings=[]
+            let textWidth=this.constructNameStrings(this.name,0,0,this.size,nameStrings);
+			for(let i=0;i<nameStrings.length;i++){
+				ctx.font=`${nameStrings[i].size}px Tex Gyre Termes`;
+				if(this.italic){
+					ctx.font='italic '+ctx.font;
+				}
+				ctx.fillText(nameStrings[i].str,pos.x-textWidth/2+nameStrings[i].x,pos.y+this.size/2+nameStrings[i].y);
 			}
-			
-			let textWidth=ctx.measureText(this.name).width;
-			ctx.fillText(this.name,pos.x-textWidth/2,pos.y+this.size/2);
+            if(this.focus){
+                ctx.beginPath();
+                ctx.moveTo(pos.x-textWidth/2-2,pos.y-this.size/2);
+                ctx.lineTo(pos.x-textWidth/2-2,pos.y+this.size/2+6);
+                ctx.lineTo(pos.x+textWidth/2+2,pos.y+this.size/2+6);
+                ctx.lineTo(pos.x+textWidth/2+2,pos.y-this.size/2);
+                ctx.lineTo(pos.x-textWidth/2-2,pos.y-this.size/2);
+                ctx.strokeStyle='#AAAAFF';
+                ctx.lineWidth=2;
+                ctx.stroke();
+            }
 		}
 		
 		//座標(x,y)と重なっているか判定
 		isPointOverlapping(x,y){
 			let pos=this.calcPoisition();
-			return (pos.x-x)**2+(pos.y-y)**2<=this.size**2;
+            let textWidth=this.constructNameStrings(this.name,0,0,this.size,[]);
+			let isIn=true;
+            if(x<pos.x-textWidth/2-2)isIn=false;
+            if(x>pos.x+textWidth/2+2)isIn=false;
+            if(y<pos.y-this.size/2)isIn=false;
+            if(y>pos.y+this.size/2+6)isIn=false;
+            return isIn;
 		}
 	}
 	
 	let vertices=[new Vertex(100,100,0),new Vertex(200,100,1)];
 	let edges=[new Edge(vertices[0],vertices[1],0)];
-	let labels=[new Label('v0',vertices[0],0),new Label('e0',edges[0],1)];
+	let labels=[new Label('v_0',vertices[0],0),new Label('e_0',edges[0],1)];
 	
 	//グラフを描画する関数
 	function draw(){
@@ -639,14 +726,14 @@
 		}
 	}
 	
-  function deleteLabel(label){
-    labels=labels.filter(function(l){
-      return l!=label;
-    });
-    for(let i=0;i<labels.length;i++){
-      labels[i].id=i;
+    function deleteLabel(label){
+        labels=labels.filter(function(l){
+            return l!=label;
+        });
+        for(let i=0;i<labels.length;i++){
+            labels[i].id=i;
+        }
     }
-  }
   
 	function coordinateXNumberChanged(number){
 		let coordinateXNumber=document.getElementById('coordinateXNumber');
@@ -688,11 +775,11 @@
 		draw();
 	}
 	
-  function fillColorChanged(color){
-    let fillColorPicker=document.getElementById('fillColorPicker');
-    focusObject.fillColor=color;
-    draw();
-  }
+    function fillColorChanged(color){
+        let fillColorPicker=document.getElementById('fillColorPicker');
+        focusObject.fillColor=color;
+        draw();
+    }
   
 	function vertexDeleteButtonClicked(){
 		deleteVertex(focusObject);
@@ -757,90 +844,96 @@
 		focusObject.selfLoopAngle=parseFloat(number);
 		draw();
 	}
-	
+    
 	function edgeDeleteButtonClicked(){
 		deleteEdge(focusObject);
 		setFocusObject(null);
 		draw();
 	}
-  
-  function labelNameTextChanged(text){
-    let labelNameText=document.getElementById('labelNameText');
-    focusObject.name=text;
-    draw();
-  }
-  
-  function labelSizeNumberChanged(number){
-    let labelSizeNumber=document.getElementById('labelSizeNumber');
-		focusObject.size=parseFloat(number);
-    draw();
-  }
-  
-  function labelColorChanged(color){
-		focusObject.color=color;
-		draw();
-	}
-	
-	function labelItalicCheckboxChanged(checked){
-		focusObject.italic=checked;
-		draw();
-	}
-	
-  function labelAngleNumberChanged(number){
-		let labelAngleNumber=document.getElementById('labelAngleNumber');
-		focusObject.angle=parseFloat(number);
-		draw();
-	}
-  
-  function labelPositionNumberChanged(number){
-    let labelPositionNumber=document.getElementById('labelPositionNumber');
-    let labelPositionRange=document.getElementById('labelPositionRange');
-    labelPositionRange.value=parseFloat(number)*100;
-		focusObject.position=parseFloat(number);
-		draw();
-  }
-	
-  function labelPositionRangeChanged(value){
-    let labelPositionNumber=document.getElementById('labelPositionNumber');
-    let labelPositionRange=document.getElementById('labelPositionRange');
-    labelPositionNumber.value=value/100;
-		focusObject.position=value/100;
-		draw();
-  }
-  
-  function labelDistanceNumberChanged(number){
-    let labelDistanceNumber=document.getElementById('labelDistanceNumber');
-		focusObject.distance=parseFloat(number);
-		draw();
-  }
-  
-  function labelDeleteButtonClicked(){
-    deleteLabel(focusObject);
-    setFocusObject(null);
-    draw();
-  }
-  
-  function addLabelButtonClicked(){
-    let newLabel;
-    if(focusObject instanceof Vertex){
-      newLabel=new Label("v"+focusObject.id,focusObject,labels.length);  
-    }else{
-      newLabel=new Label("e"+focusObject.id,focusObject,labels.length);
+    
+    function labelNameTextChanged(text){
+        let labelNameText=document.getElementById('labelNameText');
+        focusObject.name=text;
+        draw();
     }
-    labels.push(newLabel);
-    setFocusObject(newLabel);
-    draw();
-  }
+    
+    function labelSizeNumberChanged(number){
+        let labelSizeNumber=document.getElementById('labelSizeNumber');
+        focusObject.size=parseFloat(number);
+        draw();
+    }
+    
+    function labelColorChanged(color){
+        focusObject.color=color;
+        draw();
+    }
+    
+    function labelItalicCheckboxChanged(checked){
+        focusObject.italic=checked;
+        draw();
+    }
+    
+    function labelAngleNumberChanged(number){
+        let labelAngleNumber=document.getElementById('labelAngleNumber');
+        focusObject.angle=parseFloat(number);
+        draw();
+    }
+    
+    function labelPositionNumberChanged(number){
+        let labelPositionNumber=document.getElementById('labelPositionNumber');
+        let labelPositionRange=document.getElementById('labelPositionRange');
+        labelPositionRange.value=parseFloat(number)*100;
+        focusObject.position=parseFloat(number);
+        draw();
+    }
+    
+    function labelPositionRangeChanged(value){
+        let labelPositionNumber=document.getElementById('labelPositionNumber');
+        let labelPositionRange=document.getElementById('labelPositionRange');
+        labelPositionNumber.value=value/100;
+        focusObject.position=value/100;
+        draw();
+    }
+    
+    function labelDistanceNumberChanged(number){
+        let labelDistanceNumber=document.getElementById('labelDistanceNumber');
+        focusObject.distance=parseFloat(number);
+        draw();
+    }
+    
+    function labelDeleteButtonClicked(){
+        deleteLabel(focusObject);
+        setFocusObject(null);
+        draw();
+    }
+  
+    function addLabelButtonClicked(){
+        let newLabel;
+        if(focusObject instanceof Vertex){
+            newLabel=new Label("v_"+focusObject.id,focusObject,labels.length);  
+        }else{
+            newLabel=new Label("e_"+focusObject.id,focusObject,labels.length);
+        }
+        labels.push(newLabel);
+        setFocusObject(newLabel);
+        draw();
+    }
   
 	//フォーカスするオブジェクトを設定する
 	function setFocusObject(object){
-		focusObject=object;
-		let vertexSettings=document.getElementById('vertex-settings');
-		let edgeSettings=document.getElementById('edge-settings');
-    let labelSettings=document.getElementById('label-settings');
-		vertexSettings.style.display='none';
-		edgeSettings.style.display='none';
-    labelSettings.style.display='none';
+        if(focusObject!=null){
+            focusObject.focus=false;
+        }
+        focusObject=object;
+        if(focusObject!=null){
+            focusObject.focus=true;
+        }
+        let vertexSettings=document.getElementById('vertex-settings');
+        let edgeSettings=document.getElementById('edge-settings');
+        let labelSettings=document.getElementById('label-settings');
+        vertexSettings.style.display='none';
+        edgeSettings.style.display='none';
+        labelSettings.style.display='none';
 		//フォーカスしているオブジェクトによって表示内容を変える
 		if(object instanceof Vertex){
 			vertexSettings.style.display='block';
@@ -946,64 +1039,64 @@
 			let selfLoopAngleNumber=document.getElementById('selfLoopAngleNumber');
 			selfLoopAngleNumber.value=focusObject.selfLoopAngle;
 		}
-    
-    if(focusObject instanceof Label){
-      labelSettings.style.display='block';
-      //ラベルの番号
-      let labelId=document.getElementById('labelId');
-			labelId.textContent='ラベル'+focusObject.id;
-      
-      //親オブジェクトの表示
-      let parentObjectLabel=document.getElementById('parentObjectLabel');
-      if(focusObject.parentObject instanceof Vertex){
-        parentObjectLabel.textContent='頂点'+focusObject.parentObject.id;
-      }
-      if(focusObject.parentObject instanceof Edge){
-        parentObjectLabel.textContent='辺'+focusObject.parentObject.id;
-      }
-      
-      //ラベルの名前
-      let labelNameText=document.getElementById('labelNameText');
-      labelNameText.value=focusObject.name;
-      
-      //ラベルの大きさ
-      let labelSizeNumber=document.getElementById('labelSizeNumber');
-      labelSizeNumber.value=focusObject.size;
-      
-      //ラベルの色
-      let labelColorPicker=document.getElementById('labelColorPicker');
-      labelColorPicker.value=focusObject.color;
-      
+        
+        if(focusObject instanceof Label){
+            labelSettings.style.display='block';
+            //ラベルの番号
+            let labelId=document.getElementById('labelId');
+            labelId.textContent='ラベル'+focusObject.id;
+            
+            //親オブジェクトの表示
+            let parentObjectLabel=document.getElementById('parentObjectLabel');
+            if(focusObject.parentObject instanceof Vertex){
+                parentObjectLabel.textContent='頂点'+focusObject.parentObject.id;
+            }
+            if(focusObject.parentObject instanceof Edge){
+                parentObjectLabel.textContent='辺'+focusObject.parentObject.id;
+            }
+            
+            //ラベルの名前
+            let labelNameText=document.getElementById('labelNameText');
+            labelNameText.value=focusObject.name;
+            
+            //ラベルの大きさ
+            let labelSizeNumber=document.getElementById('labelSizeNumber');
+            labelSizeNumber.value=focusObject.size;
+            
+            //ラベルの色
+            let labelColorPicker=document.getElementById('labelColorPicker');
+            labelColorPicker.value=focusObject.color;
+            
 			//斜体
 			let labelItalicCheckbox=document.getElementById('labelItalicCheckbox');
 			labelItalicCheckbox.checked=focusObject.italic;
-			
-      //表示角度
-      let labelAngle=document.getElementById('labelAngle');
-      if(focusObject.parentObject instanceof Vertex){
-        labelAngle.style.display='block';
-      }else{
-        labelAngle.style.display='none';
-      }
-      let labelAngleNumber=document.getElementById('labelAngleNumber');
-      labelAngleNumber.value=focusObject.angle;
-      
-      //表示位置
-      let labelPosition=document.getElementById('labelPosition');
-      if(focusObject.parentObject instanceof Edge){
-        labelPosition.style.display='block';
-      }else{
-        labelPosition.style.display='none';
-      }
-      let labelPositionNumber=document.getElementById('labelPositionNumber');
-      labelPositionNumber.value=focusObject.position;
-      let labelPositionRange=document.getElementById('labelPositionRange');
-      labelPositionRange.value=focusObject.position*100;
-      
-      //距離
-      let labelDistanceNumber=document.getElementById('labelDistanceNumber');
-      labelDistanceNumber.value=focusObject.distance;
-    }
+            
+            //表示角度
+            let labelAngle=document.getElementById('labelAngle');
+            if(focusObject.parentObject instanceof Vertex){
+                labelAngle.style.display='block';
+            }else{
+                labelAngle.style.display='none';
+            }
+            let labelAngleNumber=document.getElementById('labelAngleNumber');
+            labelAngleNumber.value=focusObject.angle;
+            
+            //表示位置
+            let labelPosition=document.getElementById('labelPosition');
+            if(focusObject.parentObject instanceof Edge){
+                labelPosition.style.display='block';
+            }else{
+                labelPosition.style.display='none';
+            }
+            let labelPositionNumber=document.getElementById('labelPositionNumber');
+            labelPositionNumber.value=focusObject.position;
+            let labelPositionRange=document.getElementById('labelPositionRange');
+            labelPositionRange.value=focusObject.position*100;
+            
+            //距離
+            let labelDistanceNumber=document.getElementById('labelDistanceNumber');
+            labelDistanceNumber.value=focusObject.distance;
+        }
 	}
 	
 	//マウスがクリックされたときの処理
@@ -1089,14 +1182,14 @@
 		}
 		if(draggedObject instanceof Label){
 			draggedObject.updatePosition(mouseX,mouseY);
-      if(focusObject==draggedObject){        
-        let labelAngleNumber=document.getElementById('labelAngleNumber');
-        let labelPositionNumber=document.getElementById('labelPositionNumber');
-        let labelPositionRange=document.getElementById('labelPositionRange');
-        labelAngleNumber.value=focusObject.angle;
-        labelPositionNumber.value=focusObject.position;
-        labelPositionRange.value=focusObject.position*100;
-      }
+            if(focusObject==draggedObject){
+                let labelAngleNumber=document.getElementById('labelAngleNumber');
+                let labelPositionNumber=document.getElementById('labelPositionNumber');
+                let labelPositionRange=document.getElementById('labelPositionRange');
+                labelAngleNumber.value=focusObject.angle;
+                labelPositionNumber.value=focusObject.position;
+                labelPositionRange.value=focusObject.position*100;
+            }
 			draw();
 		}
 		if(addEdgeSelectedVertex!=null){
