@@ -3,6 +3,13 @@
 
 <head>
 	<title>GraphGenerator</title>
+    <style>
+        .setting-label{
+            width: 100px;
+            text-align: center;
+            display: inline-block;
+        }
+    </style>
 </head>
 
 <body>
@@ -22,29 +29,29 @@
 				<div id="vertex-settings" style="display: none;">
 					<h4 id="vertexName"></h4>
 					<div id="coordinate">
-						<div style="width: 100px; text-align: center; display: inline-block;">頂点の座標</div>：x=
+						<div class="setting-label">頂点の座標</div>：x=
 						<input type="number" id="coordinateXNumber" min="0" max="600" size="1" onchange="coordinateXNumberChanged(number.value)">
 						y=
 						<input type="number" id="coordinateYNumber" min="0" max="600" size="1" onchange="coordinateYNumberChanged(this.value)">
 					</div>
 					<div id="vertexRadius">
-						<div style="width: 100px; text-align: center; display: inline-block;">頂点の半径</div>：
+						<div class="setting-label">頂点の半径</div>：
 						<input type="number" id="vertexRadiusNumber" min="3" max="100" style="width: 120px;" onchange="vertexRadiusNumberChanged(this.value)">
 					</div>
 					<div id="borderColor">
-						<div style="width: 100px; text-align: center; display: inline-block;">枠線の色</div>：
+						<div class="setting-label">枠線の色</div>：
 						<input type="color" id="borderColorPicker" style="width: 130px;" onchange="borderColorChanged(this.value)">
 					</div>
 					<div id="borderWidth">
-						<div style="width: 100px; text-align: center; display: inline-block;">枠線の幅</div>：
+						<div class="setting-label">枠線の幅</div>：
 						<input type="number" id="borderWidthNumber" min="1" max="20" style="width: 120px;" onchange="borderWidthNumberChanged(this.value)">
 					</div>
 					<div id="fill">
-						<div style="width: 100px; text-align: center; display: inline-block;">塗りつぶし</div>：
+						<div class="setting-label">塗りつぶし</div>：
 						<input type="checkbox" id="fillCheckbox" onchange="fillCheckboxChenged(this.checked)">
 					</div>
 					<div id="fillColor">
-						<div style="width: 100px; text-align: center; display: inline-block;">塗りつぶし色</div>：
+						<div class="setting-label">塗りつぶし色</div>：
 						<input type="color" id="fillColorPicker" style="width: 130px;" onchange="fillColorChanged(this.value)">
 					</div>
 					<input type="button" id="addLabelOfVertex" value="ラベルを追加" onclick="addLabelButtonClicked()">
@@ -53,37 +60,37 @@
 				<div id="edge-settings" style="display: none;">
 					<h4 id="edgeName"></h4>
 					<div id="edgeColor">
-						<div style="width: 100px; text-align: center; display: inline-block;">辺の色</div>：
+						<div class="setting-label">辺の色</div>：
 						<input type="color" id="edgeColorPicker" onchange="edgeColorChanged(this.value)">
 					</div>
 					<div id="edgeWidth">
-						<div style="width: 100px; text-align: center; display: inline-block;">辺の幅</div>：
+						<div class="setting-label">辺の幅</div>：
 						<input type="number" id="edgeWidthNumber" min="1" max="20" style="width: 120px;" onchange="edgeWidthNumberChanged(this.value)">
 					</div>
 					<div id="arc">
-						<div style="width: 100px; text-align: center; display: inline-block;">円弧状にする</div>：
+						<div class="setting-label">円弧状にする</div>：
 						<input type="checkbox" id="arcCheckbox" onchange="arcCheckboxChanged(this.checked)">
 					</div>
 					<div id="arcRadius">
-						<div style="width: 100px; text-align: center; display: inline-block;">弧の半径</div>：
+						<div class="setting-label">弧の半径</div>：
 						<input type="number" id="arcRadiubNumber" style="width: 120px;" onchange="arcRadiusNumberChanged(this.value)">
 					</div>
 					<div id="largeArc">
-						<div style="width: 100px; text-align: center; display: inline-block;">弧を大きく</div>：
+						<div class="setting-label">弧を大きく</div>：
 						<input type="checkbox" id="largeArcCheckbox" onchange="largeArcCheckboxChanged(this.checked)">
 					</div>
 					<div id="selfLoopAngle">
-						<div style="width: 100px; text-align: center; display: inline-block;">表示角度</div>：
+						<div class="setting-label">表示角度</div>：
 						<input type="number" id="selfLoopAngleNumber" min="-180" max="180" style="width: 120px;" onchange="selfLoopAngleNumberChanged(this.value)">
 					</div>
 					<div id="arrow">
-						<div style="width: 100px; text-align: center; display: inline-block;">矢印の有無</div>：始点
+						<div class="setting-label">矢印の有無</div>：始点
 						<input type="checkbox" id="startArrowCheckbox" onchange="startArrowCheckboxChanged(this.checked)">
 						終点
 						<input type="checkbox" id="endArrowCheckbox" onchange="endArrowCheckboxChanged(this.checked)">
 					</div>
 					<div id="arrowSize">
-						<div style="width: 100px; text-align: center; display: inline-block;">矢印の大きさ</div>：
+						<div class="setting-label">矢印の大きさ</div>：
 						<input type="number" id="arrowSizeNumber" min="1" max="50" style="width: 120px;" onchange="arrowSizeNumberChanged(this.value)">
 					</div>
 					<input type="button" id="addLabelOfEdge" value="ラベルを追加" onclick="addLabelButtonClicked()">
@@ -92,38 +99,38 @@
 				<div id="label-settings" style="display: none;">
 					<h4 id="labelId"></h4>
 					<div id="parentObject">
-						<div style="width: 100px; text-align: center; display: inline-block;">オブジェクト</div>：
+						<div class="setting-label">オブジェクト</div>：
 						<label id="parentObjectLabel"></label>
 					</div>
 					<div id="labelName">
-						<div style="width: 100px; text-align: center; display: inline-block;">ラベル名</div>：
+						<div class="setting-label">ラベル名</div>：
 						<input type="text" id="labelNameText" style="width: 120px;" onchange="labelNameTextChanged(this.value)">
 					</div>
 					<div id="labelSize">
-						<div style="width: 100px; text-align: center; display: inline-block;">大きさ</div>：
+						<div class="setting-label">大きさ</div>：
 						<input type="number" id="labelSizeNumber" min="1" max="50" style="width: 120px;" onchange="labelSizeNumberChanged(this.value)">
 					</div>
 					<div id="labelColor">
-						<div style="width: 100px; text-align: center; display: inline-block;">色</div>：
+						<div class="setting-label">色</div>：
 						<input type="color" id="labelColorPicker" style="width: 130px;" onchange="labelColorChanged(this.value)">
 					</div>
 					<div id="labelItalic">
-						<div style="width: 100px; text-align: center; display: inline-block;">斜体</div>：
+						<div class="setting-label">斜体</div>：
 						<input type="checkbox" id="labelItalicCheckbox" onchange="labelItalicCheckboxChanged(this.checked)">
 					</div>
 					<div id="labelAngle">
-						<div style="width: 100px; text-align: center; display: inline-block;">表示角度</div>：
+						<div class="setting-label">表示角度</div>：
 						<input type="number" id="labelAngleNumber" min="-180" max="180" v onchange="labelAngleNumberChanged(this.value)">
 					</div>
 					<div id="labelPosition">
-						<div style="width: 100px; text-align: center; display: inline-block;">表示位置</div>：
+						<div class="setting-label">表示位置</div>：
 						<div style="display: inline-block; vertical-align: top;">
 							<input type="number" id="labelPositionNumber" min="0" max="1" step="0.1" style="width: 120px;" onchange="labelPositionNumberChanged(this.value)"><br>
 							<input type="range" id="labelPositionRange" min="0" max="100" oninput="labelPositionRangeChanged(this.value)">
 						</div>
 					</div>
 					<div id="labelDistance">
-						<div style="width: 100px; text-align: center; display: inline-block;">距離</div>：
+						<div class="setting-label">距離</div>：
 						<input type="number" id="labelDistanceNumber" style="width: 120px;" onchange="labelDistanceNumberChanged(this.value)">
 					</div>
 					<input type="button" value="ラベルを削除" onclick="labelDeleteButtonClicked()">
@@ -1242,11 +1249,11 @@
 		}
 
 		function saveGraph() {
-			let vertexObjects=[];
-			let edgeObjects=[];
-			let labelObjects=[];
+			let vertexJson=[];
+			let edgeJson=[];
+			let labelJson=[];
 			for(let i=0;i<vertices.length;i++) {
-				vertexObjects.push({
+				vertexJson.push({
 					x: vertices[i].x,
 					y: vertices[i].y,
 					radius: vertices[i].radius,
@@ -1257,7 +1264,7 @@
 				});
 			}
 			for(let i=0;i<edges.length;i++) {
-				edgeObjects.push({
+				edgeJson.push({
 					vertex1: edges[i].vertex1.id,
 					vertex2: edges[i].vertex2.id,
 					color: edges[i].color,
@@ -1279,7 +1286,7 @@
 				if(labels[i].parentObject instanceof Edge) {
 					parentType='edge';
 				}
-				labelObjects.push({
+				labelJson.push({
 					parentObjectType: parentType,
 					parentObject:labels[i].parentObject.id,
 					name: labels[i].name,
@@ -1291,7 +1298,7 @@
 					distance: labels[i].distance
 				});
 			}
-			let json=JSON.stringify({'vertex': vertexObjects,'edge': edgeObjects,'label': labelObjects},null,2);
+			let json=JSON.stringify({'vertex': vertexJson,'edge': edgeJson,'label': labelJson},null,2);
 			let blob=new Blob([json],{type: "application/json"});
 			let url=URL.createObjectURL(blob);
 			let a=document.createElement('a');
@@ -1310,42 +1317,41 @@
 			if(file){
 				let reader=new FileReader();
 				reader.onload=function(e){
-					let contents=e.target.result;
-					let json=JSON.parse(contents);
-					let vertexObjects=json.vertex;
-					let edgeObjects=json.edge;
-					let labelObjects=json.label;
-					for(let i=0;i<vertexObjects.length;i++){
-						vertices.push(new Vertex(vertexObjects[i].x,vertexObjects[i].y,i));
-						vertices[i].radius=vertexObjects[i].radius;
-						vertices[i].fill=vertexObjects[i].fill;
-						vertices[i].fillColor=vertexObjects[i].fillColor;
+					let json=JSON.parse(e.target.result);
+					let vertexJson=json.vertex;
+					let edgeJson=json.edge;
+					let labelJson=json.label;
+					for(let i=0;i<vertexJson.length;i++){
+						vertices.push(new Vertex(vertexJson[i].x,vertexJson[i].y,i));
+						vertices[i].radius=vertexJson[i].radius;
+						vertices[i].fill=vertexJson[i].fill;
+						vertices[i].fillColor=vertexJson[i].fillColor;
 					}
-					for(let i=0;i<edgeObjects.length;i++){
-						edges.push(new Edge(vertices[edgeObjects[i].vertex1],vertices[edgeObjects[i].vertex2],i));
-						edges[i].color=edgeObjects[i].color;
-						edges[i].width=edgeObjects[i].width;
-						edges[i].arc=edgeObjects[i].arc;
-						edges[i].radius=edgeObjects[i].radius;
-						edges[i].largeArc=edgeObjects[i].largeArc;
-						edges[i].selfLoopAngle=edgeObjects[i].selfLoopAngle;
-						edges[i].startArrow=edgeObjects[i].startArrow;
-						edges[i].endArrow=edgeObjects[i].endArrow;
-						edges[i].arrowSize=edgeObjects[i].arrowSize;
+					for(let i=0;i<edgeJson.length;i++){
+						edges.push(new Edge(vertices[edgeJson[i].vertex1],vertices[edgeJson[i].vertex2],i));
+						edges[i].color=edgeJson[i].color;
+						edges[i].width=edgeJson[i].width;
+						edges[i].arc=edgeJson[i].arc;
+						edges[i].radius=edgeJson[i].radius;
+						edges[i].largeArc=edgeJson[i].largeArc;
+						edges[i].selfLoopAngle=edgeJson[i].selfLoopAngle;
+						edges[i].startArrow=edgeJson[i].startArrow;
+						edges[i].endArrow=edgeJson[i].endArrow;
+						edges[i].arrowSize=edgeJson[i].arrowSize;
 					}
-					for(let i=0;i<labelObjects.length;i++){
-						if(labelObjects[i].parentObjectType=='vertex'){
-							labels.push(new Label(labelObjects[i].name,vertices[labelObjects[i].parentObject],i));
+					for(let i=0;i<labelJson.length;i++){
+						if(labelJson[i].parentObjectType=='vertex'){
+							labels.push(new Label(labelJson[i].name,vertices[labelJson[i].parentObject],i));
 						}
-						if(labelObjects[i].parentObjectType=='edge'){
-							labels.push(new Label(labelObjects[i].name,edges[labelObjects[i].parentObject],i));
+						if(labelJson[i].parentObjectType=='edge'){
+							labels.push(new Label(labelJson[i].name,edges[labelJson[i].parentObject],i));
 						}
-						labels[i].size=labelObjects[i].size;
-						labels[i].color=labelObjects[i].color;
-						labels[i].italic=labelObjects[i].italic;
-						labels[i].position=labelObjects[i].position;
-						labels[i].angle=labelObjects[i].angle;
-						labels[i].distance=labelObjects[i].distance;
+						labels[i].size=labelJson[i].size;
+						labels[i].color=labelJson[i].color;
+						labels[i].italic=labelJson[i].italic;
+						labels[i].position=labelJson[i].position;
+						labels[i].angle=labelJson[i].angle;
+						labels[i].distance=labelJson[i].distance;
 					}
 					draw();
 				};
