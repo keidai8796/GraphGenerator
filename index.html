@@ -18,7 +18,7 @@
 		クリックモード：
 		<select onchange="changeClickMode(this.value)">
 			<option value="moveObject">オブジェクトを移動</option>
-			<option value="addVertex">頂点を追加</option>
+			<option value="addVertex" selected>頂点を追加</option>
 			<option value="addEdge">辺を追加</option>
 		</select>
 	</div>
@@ -657,9 +657,9 @@
 			}
 		}
 
-		let vertices=[new Vertex(100,100,0),new Vertex(200,100,1)];
-		let edges=[new Edge(vertices[0],vertices[1],0)];
-		let labels=[new Label('v_0',vertices[0],0),new Label('e_0',edges[0],1)];
+		let vertices=[];
+		let edges=[];
+		let labels=[];
 
 		//グラフを描画する関数
 		function draw() {
@@ -676,7 +676,7 @@
 			labels.forEach((label) => label.draw());
 		}
 
-		let clickMode="moveObject";
+		let clickMode="addVertex";
 		let addEdgeSelectedVertex=null;
 		let draggedObject=null;
 		let clickOffsetX,clickOffsetY;
@@ -1242,6 +1242,8 @@
 		});
 
 		function saveGraphAsImage() {
+            setFocusObject(null);
+            draw();
 			let a=document.createElement('a');
 			a.href=canvas.toDataURL('image/png');
 			a.download='GraphImage.png';
